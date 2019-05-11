@@ -47,9 +47,13 @@ class Server(
         }
     }
 
-    fun onTrackStart() {}
+    fun onTrackStart() {
+        println("Track started")
+    }
 
-    fun onTrackEnd() {}
+    fun onTrackEnd() {
+        println("Track ended")
+    }
 
     suspend fun loadServerData() {
         val server = discordBot.musicbotRestClient.getServerByGuildId(guild.id)

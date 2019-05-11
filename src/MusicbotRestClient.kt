@@ -12,8 +12,6 @@ import io.ktor.client.request.header
 import io.ktor.client.response.readText
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 class MusicbotRestClient(
     val discordBot: DiscordBot
@@ -21,17 +19,9 @@ class MusicbotRestClient(
 
     private var token: String? = null
 
-    init {
-        runBlocking {
-            launch {
-                login()
-            }
-        }
-    }
-
     private suspend fun login() {
         val call = doRequestWithBody(
-            "http://127.0.0.1:8080/login",
+            "${discordBot.configuration.apiUrl}/login",
             HttpMethod.Post,
             Klaxon().toJsonString(
                 MusicbotRestLoginModel(
@@ -47,12 +37,15 @@ class MusicbotRestClient(
     }
 
     suspend fun getServerByGuildId(guildId: Snowflake): MusicbotRestServerModel? {
-        return makeRequest<MusicbotRestServerModel>("http://127.0.0.1:8080/server/guild/$guildId", HttpMethod.Get)
+        return makeRequest<MusicbotRestServerModel>(
+            "${discordBot.configuration.apiUrl}/server/guild/$guildId",
+            HttpMethod.Get
+        )
     }
 
     suspend fun linkGuildToServer(serverId: String, guildId: String, token: String): MusicbotRestServerModel? {
         return makeRequestWithBody(
-            "http://127.0.0.1:8080/server/link/$serverId",
+            "${discordBot.configuration.apiUrl}/server/link/$serverId",
             HttpMethod.Post,
             Klaxon().toJsonString(MusicbotRestServerLinkModel(guildId, token))
         )

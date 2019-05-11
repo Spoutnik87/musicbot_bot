@@ -17,4 +17,7 @@ class Configuration(
 
     val password
         get() = application.environment.config.property("ktor.password").getString()
+
+    val apiUrl
+        get() = application.environment.config.property("ktor.apiUrl").getString()
 }
