@@ -43,17 +43,6 @@ class DiscordBot(
                 }
             }
         }.subscribe()
-        /*client.eventDispatcher.on(MessageCreateEvent::class.java)
-            .flatMap { event ->
-                Mono.justOrEmpty(event.message.content)
-                    .flatMap { content ->
-                        Flux.fromIterable(commandList.entries)
-                            .filter { content.startsWith(SUPER_PREFIX + it.key) }
-                            .flatMap { it.value.execute(event) }
-                            .next()
-                    }
-            }
-            .subscribe()*/
 
         val playerManager = DefaultAudioPlayerManager()
         playerManager.configuration.setFrameBufferFactory(::NonAllocatingAudioFrameBuffer)

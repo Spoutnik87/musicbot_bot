@@ -30,18 +30,5 @@ class JoinCommand(
         } else {
             channel.createMessage("Votre demande pour rejoindre ce serveur n'a pas pu être prise en compte.").block()
         }
-
-        /*Mono.justOrEmpty(messageEvent.message.content).map { it.substring(SUPER_PREFIX.length + prefix.length + 1) }.doOnNext {
-            if (messageEvent.guildId.isPresent && messageEvent.message.author.isPresent) {
-                val userId = messageEvent.message.author.get().id.toString()
-                val guildId = messageEvent.guildId.get().toString()
-                GlobalScope.launch {
-                    discordBot.serverList[guildId]?.linkServer(it, userId)
-                    val channel = messageEvent.message.channel.block()
-                    channel?.createMessage("Votre demande pour rejoindre ce serveur a été prise en compte.")
-                }
-            }
-
-        }.subscribe()*/
     }
 }
