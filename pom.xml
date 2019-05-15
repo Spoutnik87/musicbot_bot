@@ -40,6 +40,16 @@
             <version>1.2.1</version>
         </dependency>
         <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-reactor</artifactId>
+            <version>1.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-reactive</artifactId>
+            <version>1.2.1</version>
+        </dependency>
+        <dependency>
             <groupId>io.ktor</groupId>
             <artifactId>ktor-server-netty</artifactId>
             <version>${ktor_version}</version>
@@ -105,18 +115,17 @@
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <version>${kotlin_version}</version>
+                <configuration>
+                    <args>
+                        <arg>-Xcoroutines=enable</arg>
+                    </args>
+                </configuration>
                 <executions>
                     <execution>
                         <id>compile</id>
                         <goals>
                             <goal>compile</goal>
                         </goals>
-                        <configuration>
-                            <experimentalCoroutines>enable</experimentalCoroutines>
-                            <args>
-                                <arg>-Xcoroutines=enable</arg>
-                            </args>
-                        </configuration>
                     </execution>
                     <execution>
                         <id>test-compile</id>

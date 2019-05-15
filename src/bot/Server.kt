@@ -1,18 +1,14 @@
 package fr.spoutnik87.bot
 
-import com.beust.klaxon.Klaxon
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.event.TrackEndEvent
 import com.sedmelluq.discord.lavaplayer.player.event.TrackStartEvent
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import discord4j.core.`object`.entity.Guild
 import fr.spoutnik87.DiscordBot
-import fr.spoutnik87.model.MusicbotRestDecodedLinkToken
 import fr.spoutnik87.model.MusicbotRestServerModel
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import org.apache.commons.codec.binary.Base64
-import org.apache.commons.codec.binary.StringUtils
 
 class Server(
     val discordBot: DiscordBot,
@@ -33,10 +29,8 @@ class Server(
     val trackStartTime: Long? = null
 
     init {
-        runBlocking {
-            launch {
-                loadServerData()
-            }
+        GlobalScope.launch {
+            loadServerData()
         }
         player.addListener {
             if (it is TrackStartEvent) {
@@ -56,7 +50,7 @@ class Server(
     }
 
     suspend fun loadServerData() {
-        val server = discordBot.musicbotRestClient.getServerByGuildId(guild.id)
+        val server = discordBot.musicbotRestClient.getServerByGuildId(guild.id.asString())
         if (server == null) {
             linkable = true
             initialized = false
@@ -67,21 +61,29 @@ class Server(
         }
     }
 
-    suspend fun linkServer(base64encodedLinkToken: String) {
+    suspend fun linkServer(linkToken: String, userId: String) {
         try {
-            val decodedLinkToken = Klaxon().parse<MusicbotRestDecodedLinkToken>(
-                StringUtils.newStringUtf8(
-                    Base64.decodeBase64(base64encodedLinkToken)
-                )
-            ) ?: return
             val server = discordBot.musicbotRestClient.linkGuildToServer(
-                decodedLinkToken.serverId,
-                guild.id.toString(),
-                decodedLinkToken.token
+                userId,
+                guild.id.asString(),
+                linkToken
             ) ?: return
             this.server = server
+            this.linkable = false
         } catch (e: Exception) {
-            println("An error happened during an attempt to link Guild ${guild.id} to a server.")
+            println("An error happened during an attempt to link Guild ${guild.id.asString()} to a server.")
+        }
+    }
+
+    suspend fun joinServer(joinToken: String, userId: String) {
+        try {
+            discordBot.musicbotRestClient.joinServer(
+                userId,
+                guild.id.asString(),
+                joinToken
+            ) ?: return
+        } catch (e: Exception) {
+            println("An error happened during an attempt of user $userId to join Guild ${guild.id.asString()}.")
         }
     }
 }

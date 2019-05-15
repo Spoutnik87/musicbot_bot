@@ -1,8 +1,8 @@
 package fr.spoutnik87
 
 import com.beust.klaxon.Klaxon
-import discord4j.core.`object`.util.Snowflake
 import fr.spoutnik87.model.MusicbotRestLoginModel
+import fr.spoutnik87.model.MusicbotRestServerJoinModel
 import fr.spoutnik87.model.MusicbotRestServerLinkModel
 import fr.spoutnik87.model.MusicbotRestServerModel
 import io.ktor.client.HttpClient
@@ -10,14 +10,23 @@ import io.ktor.client.call.HttpClientCall
 import io.ktor.client.call.call
 import io.ktor.client.request.header
 import io.ktor.client.response.readText
+import io.ktor.content.TextContent
+import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.runBlocking
 
 class MusicbotRestClient(
     val discordBot: DiscordBot
 ) {
 
     private var token: String? = null
+
+    init {
+        runBlocking {
+            login()
+        }
+    }
 
     private suspend fun login() {
         val call = doRequestWithBody(
@@ -36,18 +45,26 @@ class MusicbotRestClient(
         }
     }
 
-    suspend fun getServerByGuildId(guildId: Snowflake): MusicbotRestServerModel? {
+    suspend fun getServerByGuildId(guildId: String): MusicbotRestServerModel? {
         return makeRequest<MusicbotRestServerModel>(
             "${discordBot.configuration.apiUrl}/server/guild/$guildId",
             HttpMethod.Get
         )
     }
 
-    suspend fun linkGuildToServer(serverId: String, guildId: String, token: String): MusicbotRestServerModel? {
+    suspend fun linkGuildToServer(userId: String, guildId: String, token: String): MusicbotRestServerModel? {
         return makeRequestWithBody(
-            "${discordBot.configuration.apiUrl}/server/link/$serverId",
+            "${discordBot.configuration.apiUrl}/server/link",
             HttpMethod.Post,
-            Klaxon().toJsonString(MusicbotRestServerLinkModel(guildId, token))
+            Klaxon().toJsonString(MusicbotRestServerLinkModel(userId, guildId, token))
+        )
+    }
+
+    suspend fun joinServer(userId: String, guildId: String, token: String): Any? {
+        return makeRequestWithBody(
+            "${discordBot.configuration.apiUrl}/user/joinServer",
+            HttpMethod.Post,
+            Klaxon().toJsonString(MusicbotRestServerJoinModel(userId, guildId, token))
         )
     }
 
@@ -91,7 +108,8 @@ class MusicbotRestClient(
         val call = client.call(url) {
             this.method = method
             if (withToken) header("Authorization", "Bearer $token")
-            if (body != null) this.body = body
+            if (body != null && body is String) this.body =
+                TextContent(body, contentType = ContentType.Application.Json)
         }
         return call
     }

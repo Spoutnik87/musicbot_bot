@@ -1,8 +1,8 @@
 package fr.spoutnik87.model
 
-data class MusicbotRestServerLinkModel(
+data class MusicbotRestServerJoinModel(
     val userId: String,
     val guildId: String,
-    val token: String
+    val serverJoinToken: String
 ) {
 }
