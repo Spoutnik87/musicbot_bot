@@ -4,7 +4,7 @@ import discord4j.core.event.domain.message.MessageCreateEvent
 import fr.spoutnik87.Command
 import fr.spoutnik87.DiscordBot
 
-class LinkCommand(
+class PlayCommand(
     override val prefix: String,
     override val discordBot: DiscordBot
 ) : Command {
@@ -15,7 +15,7 @@ class LinkCommand(
         ) {
             return
         }
-        val token = messageEvent.message.content.get().substring(DiscordBot.SUPER_PREFIX.length + prefix.length + 1)
+        val url = messageEvent.message.content.get().substring(DiscordBot.SUPER_PREFIX.length + prefix.length + 1)
         if (!messageEvent.guildId.isPresent || !messageEvent.message.author.isPresent) {
             return
         }
@@ -23,16 +23,19 @@ class LinkCommand(
         val guildId = messageEvent.guildId.get().asString()
         val channel = messageEvent.message.channel.block() ?: return
 
-        if (discordBot.serverList[guildId] == null) {
-            channel.createMessage("Une erreur est survenue.").block()
+        if (!messageEvent.member.isPresent) {
             return
         }
+        val member = messageEvent.member.get()
+        val voiceState = member.voiceState.block() ?: return
+        val voiceChannel = voiceState.channel.block() ?: return
+        val server = discordBot.serverList[guildId] ?: return
 
-        discordBot.serverList[guildId]?.linkServer(token, userId)
-        if (discordBot.serverList[guildId]?.linkable == false) {
-            channel.createMessage("La liaison a été effectuée.").block()
-        } else {
-            channel.createMessage("La liaison n'a pas pu être effectuée.").block()
-        }
+        server.voiceConnection = voiceChannel.join {
+            it.setProvider(server.audioProvider)
+        }.block()
+
+        // val scheduler = TrackScheduler(server)
+        // discordBot.playerManager.loadItem("https://www.youtube.com/watch?v=JP4Ar1vscGE", scheduler)
     }
 }

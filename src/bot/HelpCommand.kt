@@ -10,14 +10,13 @@ class HelpCommand(
 ) : Command {
 
     override suspend fun execute(messageEvent: MessageCreateEvent) {
-        messageEvent.message.channel.flatMap {
-            it.createMessage(
-                """
+        val channel = messageEvent.message.channel.block() ?: return
+        channel.createMessage(
+            """
             Musicbot -- HELP
             Command link : TODO
             Command join : TODO
             """.trimIndent()
-            )
-        }.block()
+        ).block()
     }
 }

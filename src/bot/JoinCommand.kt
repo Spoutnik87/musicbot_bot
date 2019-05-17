@@ -18,7 +18,7 @@ class JoinCommand(
         val token = messageEvent.message.content.get().substring(DiscordBot.SUPER_PREFIX.length + prefix.length + 1)
         val userId = messageEvent.message.author.get().id.asString()
         val guildId = messageEvent.guildId.get().asString()
-        val channel = messageEvent.message.channel.block()
+        val channel = messageEvent.message.channel.block() ?: return
         if (discordBot.serverList[guildId] == null) {
             channel.createMessage("Une erreur est survenue.").block()
             return
