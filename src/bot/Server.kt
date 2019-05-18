@@ -107,30 +107,33 @@ class Server(
         }
     }
 
-    suspend fun linkServer(linkToken: String, userId: String) {
+    suspend fun linkServer(linkToken: String, userId: String): MusicbotRestServerModel? {
         try {
             val server = discordBot.musicbotRestClient.linkGuildToServer(
                 userId,
                 guild.id.asString(),
                 linkToken
-            ) ?: return
+            ) ?: return null
             this.server = server
             this.linkable = false
+            return server
         } catch (e: Exception) {
             println("An error happened during an attempt to link Guild ${guild.id.asString()} to a server.")
         }
+        return null
     }
 
-    suspend fun joinServer(joinToken: String, userId: String) {
+    suspend fun joinServer(joinToken: String, userId: String): Any? {
         try {
-            discordBot.musicbotRestClient.joinServer(
+            return discordBot.musicbotRestClient.joinServer(
                 userId,
                 guild.id.asString(),
                 joinToken
-            ) ?: return
+            ) ?: return null
         } catch (e: Exception) {
             println("An error happened during an attempt of user $userId to join Guild ${guild.id.asString()}.")
         }
+        return null
     }
 
     fun addTrack(id: String, initiator: String) {

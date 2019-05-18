@@ -28,7 +28,8 @@ class JoinCommand(
         if (status != null) {
             channel.createMessage("Vous avez rejoint ce serveur.").block()
         } else {
-            channel.createMessage("Votre demande pour rejoindre ce serveur n'a pas pu être prise en compte.").block()
+            channel.createMessage("Votre demande pour rejoindre ce serveur n'a pas été accepté. Vous êtes peut-être déjà membre de ce serveur.")
+                .block()
         }
     }
 }

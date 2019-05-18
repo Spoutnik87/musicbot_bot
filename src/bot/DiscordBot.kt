@@ -8,7 +8,10 @@ import discord4j.core.DiscordClientBuilder
 import discord4j.core.`object`.entity.Guild
 import discord4j.core.event.domain.VoiceStateUpdateEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
-import fr.spoutnik87.bot.*
+import fr.spoutnik87.bot.HelpCommand
+import fr.spoutnik87.bot.JoinCommand
+import fr.spoutnik87.bot.LinkCommand
+import fr.spoutnik87.bot.Server
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
@@ -68,7 +71,6 @@ class DiscordBot(
         commandList["help"] = HelpCommand("help", this)
         commandList["link"] = LinkCommand("link", this)
         commandList["join"] = JoinCommand("join", this)
-        commandList["play"] = PlayCommand("play", this)
     }
 
     fun stop() {

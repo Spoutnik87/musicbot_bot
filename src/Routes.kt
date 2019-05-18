@@ -9,15 +9,18 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.response.respondText
-import io.ktor.routing.*
+import io.ktor.routing.Routing
+import io.ktor.routing.get
+import io.ktor.routing.post
+import io.ktor.routing.route
 
 fun Routing.root(discordBot: DiscordBot) {
 
     route("server") {
         /**
-         * Get queue status
+         * Get server status
          */
-        get("/queue/{guildId}") {
+        get("/{guildId}") {
             val guildId = call.parameters["guildId"]
             val server = discordBot.serverList[guildId]
             if (server == null) {
@@ -71,7 +74,7 @@ fun Routing.root(discordBot: DiscordBot) {
         /**
          * Update currently playing track position.
          */
-        put("/position/{guildId}") {
+        post("/position/{guildId}") {
             val reader = call.receive<UpdateTrackPositionReader>()
             val guildId = call.parameters["guildId"]
             val server = discordBot.serverList[guildId]

@@ -27,9 +27,13 @@ class LinkCommand(
             channel.createMessage("Une erreur est survenue.").block()
             return
         }
-
-        discordBot.serverList[guildId]?.linkServer(token, userId)
         if (discordBot.serverList[guildId]?.linkable == false) {
+            channel.createMessage("Ce serveur est déjà lié.").block()
+            return
+        }
+
+        val result = discordBot.serverList[guildId]?.linkServer(token, userId)
+        if (result != null) {
             channel.createMessage("La liaison a été effectuée.").block()
         } else {
             channel.createMessage("La liaison n'a pas pu être effectuée.").block()
