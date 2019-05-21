@@ -66,6 +66,7 @@ class Server(
         println("Track ended")
         val content = queue.next()
         if (content?.audioTrack == null) {
+            queue.stop()
             leaveChannel()
             return
         }
@@ -156,15 +157,16 @@ class Server(
 
     fun updateTrackPosition(id: String, initiator: String, position: Long) {
         if (queue.currentlyPlaying?.id == id) {
+            // TODO Reload track with new position.
             player.playingTrack?.position = position
         }
     }
 
     fun getStatus(): ServerViewModel {
         return ServerViewModel(guild.id.asString(), QueueViewModel(queue.getAllContents()
-            .map { ContentViewModel(it.id, it.initiator, it.duration, null) }), queue.currentlyPlaying.let {
+            .map { ContentViewModel(it.id, it.initiator, it.duration, null, null) }), queue.currentlyPlaying.let {
             if (it != null) {
-                ContentViewModel(it.id, it.initiator, it.duration, it.startTime)
+                ContentViewModel(it.id, it.initiator, it.duration, it.startTime, it.position)
             } else {
                 null
             }

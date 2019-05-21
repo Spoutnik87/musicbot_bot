@@ -37,7 +37,12 @@ class Queue(
         val content = queue[0]
         queue.removeAt(0)
         this.currentlyPlaying = content
+        content.startTime = System.currentTimeMillis()
         return content
+    }
+
+    fun stop() {
+        this.currentlyPlaying = null
     }
 
     fun clear() {

@@ -17,5 +17,8 @@ class Content(
     val duration: Long
         get() = audioTrack.duration
 
+    val position: Long
+        get() = audioTrack.position
+
     var startTime: Long? = null
 }
