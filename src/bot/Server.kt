@@ -6,10 +6,12 @@ import com.sedmelluq.discord.lavaplayer.player.event.TrackStartEvent
 import discord4j.core.`object`.entity.Guild
 import discord4j.core.`object`.util.Snowflake
 import discord4j.voice.VoiceConnection
+import fr.spoutnik87.Configuration
 import fr.spoutnik87.DiscordBot
+import fr.spoutnik87.RestClient
 import fr.spoutnik87.model.ContentViewModel
-import fr.spoutnik87.model.MusicbotRestServerModel
 import fr.spoutnik87.model.QueueViewModel
+import fr.spoutnik87.model.RestServerModel
 import fr.spoutnik87.viewmodel.ServerViewModel
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -20,7 +22,7 @@ class Server(
     val player: AudioPlayer
 ) {
 
-    private var server: MusicbotRestServerModel? = null
+    private var server: RestServerModel? = null
     val audioProvider = LavaPlayerAudioProvider(player)
     var voiceConnection: VoiceConnection? = null
 
@@ -97,7 +99,7 @@ class Server(
     }
 
     suspend fun loadServerData() {
-        val server = discordBot.musicbotRestClient.getServerByGuildId(guild.id.asString())
+        val server = RestClient.getServerByGuildId(guild.id.asString())
         if (server == null) {
             linkable = true
             initialized = false
@@ -108,9 +110,9 @@ class Server(
         }
     }
 
-    suspend fun linkServer(linkToken: String, userId: String): MusicbotRestServerModel? {
+    suspend fun linkServer(linkToken: String, userId: String): RestServerModel? {
         try {
-            val server = discordBot.musicbotRestClient.linkGuildToServer(
+            val server = RestClient.linkGuildToServer(
                 userId,
                 guild.id.asString(),
                 linkToken
@@ -126,7 +128,7 @@ class Server(
 
     suspend fun joinServer(joinToken: String, userId: String): Any? {
         try {
-            return discordBot.musicbotRestClient.joinServer(
+            return RestClient.joinServer(
                 userId,
                 guild.id.asString(),
                 joinToken
@@ -139,7 +141,7 @@ class Server(
 
     fun addTrack(id: String, initiator: String) {
         val scheduler = TrackScheduler(this, id, initiator)
-        discordBot.playerManager.loadItem(discordBot.configuration.filesPath + "media\\" + id, scheduler)
+        discordBot.playerManager.loadItem(Configuration.filesPath + "media\\" + id, scheduler)
     }
 
     fun removeTrack(id: String, initiator: String) {

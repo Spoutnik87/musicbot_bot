@@ -3,6 +3,7 @@ package fr.spoutnik87.bot
 import discord4j.core.event.domain.message.MessageCreateEvent
 import fr.spoutnik87.Command
 import fr.spoutnik87.DiscordBot
+import fr.spoutnik87.RestClient
 
 class JoinCommand(
     override val prefix: String,
@@ -25,7 +26,7 @@ class JoinCommand(
             return
         }
 
-        var status = discordBot.musicbotRestClient.joinServer(userId, guildId, token)
+        var status = RestClient.joinServer(userId, guildId, token)
         if (status != null) {
             channel.createMessage("Vous avez rejoint ce serveur.").block()
         } else {

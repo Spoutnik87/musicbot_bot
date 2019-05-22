@@ -11,7 +11,7 @@ fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
 fun Application.module(testing: Boolean = false) {
     val configuration = Configuration(this)
-    val discordBot = DiscordBot(configuration)
+    val discordBot = DiscordBot()
     discordBot.start()
 
     routing {

@@ -1,10 +1,11 @@
 package fr.spoutnik87
 
 import com.beust.klaxon.Klaxon
-import fr.spoutnik87.model.MusicbotRestLoginModel
-import fr.spoutnik87.model.MusicbotRestServerJoinModel
-import fr.spoutnik87.model.MusicbotRestServerLinkModel
-import fr.spoutnik87.model.MusicbotRestServerModel
+import fr.spoutnik87.model.RestLoginModel
+import fr.spoutnik87.model.RestServerJoinModel
+import fr.spoutnik87.model.RestServerLinkModel
+import fr.spoutnik87.model.RestServerModel
+import fr.spoutnik87.util.retry
 import io.ktor.client.HttpClient
 import io.ktor.client.call.HttpClientCall
 import io.ktor.client.call.call
@@ -16,26 +17,29 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 
-class MusicbotRestClient(
-    val discordBot: DiscordBot
-) {
+object RestClient {
 
     private var token: String? = null
 
-    init {
+    /**
+     * Blocking function. Retry until token is obtained.
+     */
+    fun loadToken() {
         runBlocking {
-            login()
+            retry(60) {
+                login()
+            }
         }
     }
 
     private suspend fun login() {
         val call = doRequestWithBody(
-            "${discordBot.configuration.apiUrl}/login",
+            "${Configuration.apiUrl}/login",
             HttpMethod.Post,
             Klaxon().toJsonString(
-                MusicbotRestLoginModel(
-                    discordBot.configuration.username,
-                    discordBot.configuration.password
+                RestLoginModel(
+                    Configuration.username,
+                    Configuration.password
                 )
             ),
             false
@@ -45,26 +49,26 @@ class MusicbotRestClient(
         }
     }
 
-    suspend fun getServerByGuildId(guildId: String): MusicbotRestServerModel? {
-        return makeRequest<MusicbotRestServerModel>(
-            "${discordBot.configuration.apiUrl}/server/guild/$guildId",
+    suspend fun getServerByGuildId(guildId: String): RestServerModel? {
+        return makeRequest<RestServerModel>(
+            "${Configuration.apiUrl}/server/guild/$guildId",
             HttpMethod.Get
         )
     }
 
-    suspend fun linkGuildToServer(userId: String, guildId: String, token: String): MusicbotRestServerModel? {
+    suspend fun linkGuildToServer(userId: String, guildId: String, token: String): RestServerModel? {
         return makeRequestWithBody(
-            "${discordBot.configuration.apiUrl}/server/link",
+            "${Configuration.apiUrl}/server/link",
             HttpMethod.Post,
-            Klaxon().toJsonString(MusicbotRestServerLinkModel(userId, guildId, token))
+            Klaxon().toJsonString(RestServerLinkModel(userId, guildId, token))
         )
     }
 
     suspend fun joinServer(userId: String, guildId: String, token: String): Any? {
         return makeRequestWithBody(
-            "${discordBot.configuration.apiUrl}/user/joinServer",
+            "${Configuration.apiUrl}/user/joinServer",
             HttpMethod.Post,
-            Klaxon().toJsonString(MusicbotRestServerJoinModel(userId, guildId, token))
+            Klaxon().toJsonString(RestServerJoinModel(userId, guildId, token))
         )
     }
 

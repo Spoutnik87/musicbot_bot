@@ -2,9 +2,13 @@ package fr.spoutnik87
 
 import io.ktor.application.Application
 
-class Configuration(
-    val application: Application
-) {
+object Configuration {
+
+    private lateinit var application: Application
+
+    operator fun invoke(application: Application) {
+        this.application = application
+    }
 
     val token
         get() = application.environment.config.property("ktor.token").getString()

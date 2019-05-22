@@ -15,14 +15,11 @@ import fr.spoutnik87.bot.Server
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
-class DiscordBot(
-    val configuration: Configuration
-) {
+class DiscordBot {
 
     lateinit var client: DiscordClient
     private var started = false
 
-    val musicbotRestClient = MusicbotRestClient(this)
     val serverList = HashMap<String, Server>()
 
     val commandList = HashMap<String, Command>()
@@ -34,15 +31,18 @@ class DiscordBot(
             return
         }
         started = true
+        RestClient.loadToken()
 
         loadCommands()
 
-        client = DiscordClientBuilder(configuration.token).build()
+        client = DiscordClientBuilder(Configuration.token).build()
         client.eventDispatcher.on(MessageCreateEvent::class.java).doOnNext { event ->
-            GlobalScope.launch {
-                if (event.message.content.isPresent) {
-                    val content = event.message.content.get()
-                    commandList.filter { content.startsWith(SUPER_PREFIX + it.key) }.forEach { it.value.execute(event) }
+            if (event.message.content.isPresent) {
+                val content = event.message.content.get()
+                commandList.filter { content.startsWith(SUPER_PREFIX + it.key) }.forEach {
+                    GlobalScope.launch {
+                        it.value.execute(event)
+                    }
                 }
             }
         }.subscribe()

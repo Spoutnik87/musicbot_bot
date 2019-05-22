@@ -1,6 +1,6 @@
 package fr.spoutnik87.model
 
-data class MusicbotRestServerModel(
+data class RestServerModel(
     val id: String,
     val name: String,
     val ownerId: String,
