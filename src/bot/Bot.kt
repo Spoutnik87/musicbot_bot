@@ -147,7 +147,7 @@ class Bot(
     /**
      * Play paused track with it's old position.
      */
-    fun unPausePlayingTrack() {
+    fun resumePlayingTrack() {
         if (server.playingContent == null || !isPaused) {
             return
         }

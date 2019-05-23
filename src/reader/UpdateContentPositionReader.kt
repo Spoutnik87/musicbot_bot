@@ -1,6 +1,6 @@
 package fr.spoutnik87.reader
 
-class UpdateTrackPositionReader(
+class UpdateContentPositionReader(
     val id: String,
     val initiator: String,
     val position: Long

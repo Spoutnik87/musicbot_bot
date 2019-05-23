@@ -1,5 +1,5 @@
 package fr.spoutnik87.reader
 
-data class UnPauseTrackReader(
+data class ResumeContentReader(
     val initiator: String
 )

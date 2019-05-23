@@ -1,5 +1,5 @@
 package fr.spoutnik87.reader
 
-data class PauseTrackReader(
+data class PauseContentReader(
     val initiator: String
 )

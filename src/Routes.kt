@@ -22,7 +22,7 @@ fun Routing.root() {
     commandList["clear"] = ClearQueueCommand()
     commandList["setPosition"] = SetPositionCommand()
     commandList["pause"] = PauseCommand()
-    commandList["unPause"] = UnPauseCommand()
+    commandList["resume"] = ResumeCommand()
 
     route("server") {
         /**
@@ -38,10 +38,10 @@ fun Routing.root() {
             }
         }
         /**
-         * Add an audiotrack to queue
+         * Add a content to queue
          */
         post("/play/{guildId}") {
-            val reader = call.receive<PlayTrackReader>()
+            val reader = call.receive<PlayContentReader>()
             val guildId = call.parameters.getOrFail("guildId")
             val server = BotApplication.getServer(guildId)
             if (server == null) {
@@ -52,10 +52,10 @@ fun Routing.root() {
             }
         }
         /**
-         * Remove an audiotrack from the queue
+         * Remove a content from the queue
          */
         post("/stop/{guildId}") {
-            val reader = call.receive<StopTrackReader>()
+            val reader = call.receive<StopContentReader>()
             val guildId = call.parameters.getOrFail("guildId")
             val server = BotApplication.getServer(guildId)
             if (server == null) {
@@ -80,10 +80,10 @@ fun Routing.root() {
             }
         }
         /**
-         * Update currently playing track position.
+         * Update currently playing content position.
          */
         post("/position/{guildId}") {
-            val reader = call.receive<UpdateTrackPositionReader>()
+            val reader = call.receive<UpdateContentPositionReader>()
             val guildId = call.parameters.getOrFail("guildId")
             val server = BotApplication.getServer(guildId)
             if (server == null) {
@@ -98,7 +98,7 @@ fun Routing.root() {
          * Pause playing content
          */
         post("/pause/{guildId}") {
-            val reader = call.receive<PauseTrackReader>()
+            val reader = call.receive<PauseContentReader>()
             val guildId = call.parameters.getOrFail("guildId")
             val server = BotApplication.getServer(guildId)
             if (server == null) {
@@ -112,14 +112,14 @@ fun Routing.root() {
         /**
          * Resume playing content
          */
-        post("/unpause/{guildId}") {
-            val reader = call.receive<UnPauseTrackReader>()
+        post("/resume/{guildId}") {
+            val reader = call.receive<ResumeContentReader>()
             val guildId = call.parameters.getOrFail("guildId")
             val server = BotApplication.getServer(guildId)
             if (server == null) {
                 call.respond(HttpStatusCode.BadRequest)
             } else {
-                commandList["unPause"]?.execute(WebRequestEvent(reader), server)
+                commandList["resume"]?.execute(WebRequestEvent(reader), server)
                 call.respond(server.getStatus())
             }
         }

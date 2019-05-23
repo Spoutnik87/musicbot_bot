@@ -1,6 +1,6 @@
 package fr.spoutnik87.reader
 
-data class PlayTrackReader(
+data class StopContentReader(
     val uid: String,
     val id: String,
     val initiator: String

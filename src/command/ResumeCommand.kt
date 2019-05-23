@@ -1,8 +1,8 @@
 package fr.spoutnik87.bot
 
-class UnPauseCommand : WebCommand {
+class ResumeCommand : WebCommand {
 
     override suspend fun execute(event: WebRequestEvent, server: Server) {
-        server.unPauseContent()
+        server.resumeContent()
     }
 }

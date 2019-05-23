@@ -119,8 +119,8 @@ class Server(
         bot.pausePlayingTrack()
     }
 
-    fun unPauseContent() {
-        bot.unPausePlayingTrack()
+    fun resumeContent() {
+        bot.resumePlayingTrack()
         playingContent?.loadTrack(bot.playingTrack)
     }
 
