@@ -6,23 +6,19 @@ import com.sedmelluq.discord.lavaplayer.track.playback.NonAllocatingAudioFrameBu
 import discord4j.core.DiscordClient
 import discord4j.core.DiscordClientBuilder
 import discord4j.core.`object`.entity.Guild
-import discord4j.core.event.domain.VoiceStateUpdateEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
-import fr.spoutnik87.bot.HelpCommand
-import fr.spoutnik87.bot.JoinCommand
-import fr.spoutnik87.bot.LinkCommand
-import fr.spoutnik87.bot.Server
+import fr.spoutnik87.bot.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
-class DiscordBot {
+object BotApplication {
 
     lateinit var client: DiscordClient
     private var started = false
 
-    val serverList = HashMap<String, Server>()
+    private val serverList = HashMap<String, Server>()
 
-    val commandList = HashMap<String, Command>()
+    private val commandList = HashMap<String, TextCommand>()
 
     val playerManager = DefaultAudioPlayerManager()
 
@@ -37,17 +33,18 @@ class DiscordBot {
 
         client = DiscordClientBuilder(Configuration.token).build()
         client.eventDispatcher.on(MessageCreateEvent::class.java).doOnNext { event ->
-            if (event.message.content.isPresent) {
+            if (event.message.content.isPresent && event.guildId.isPresent) {
                 val content = event.message.content.get()
-                commandList.filter { content.startsWith(SUPER_PREFIX + it.key) }.forEach {
-                    GlobalScope.launch {
-                        it.value.execute(event)
+                val guildId = event.guildId.get().asString()
+                val server = serverList[guildId]
+                if (server != null) {
+                    commandList.filter { content.startsWith(Configuration.superPrefix + it.key) }.forEach {
+                        GlobalScope.launch {
+                            it.value.execute(event, server)
+                        }
                     }
                 }
             }
-        }.subscribe()
-        client.eventDispatcher.on(VoiceStateUpdateEvent::class.java).doOnNext {
-
         }.subscribe()
 
         playerManager.configuration.setFrameBufferFactory(::NonAllocatingAudioFrameBuffer)
@@ -56,7 +53,7 @@ class DiscordBot {
 
         client.guilds.subscribe {
             if (it is Guild && serverList[it.id.asString()] == null) {
-                serverList[it.id.asString()] = Server(this, it, playerManager.createPlayer())
+                serverList[it.id.asString()] = Server(it, playerManager.createPlayer())
             } else {
                 println("An error happened during Guild loading")
             }
@@ -68,10 +65,12 @@ class DiscordBot {
     }
 
     private fun loadCommands() {
-        commandList["help"] = HelpCommand("help", this)
-        commandList["link"] = LinkCommand("link", this)
-        commandList["join"] = JoinCommand("join", this)
+        commandList["help"] = HelpCommand("help")
+        commandList["link"] = LinkCommand("link")
+        commandList["join"] = JoinCommand("join")
     }
+
+    fun getServer(guildId: String) = serverList[guildId]
 
     fun stop() {
         if (!started) {
@@ -79,9 +78,5 @@ class DiscordBot {
         }
         started = false
         client.logout().subscribe()
-    }
-
-    companion object {
-        const val SUPER_PREFIX = "!!"
     }
 }

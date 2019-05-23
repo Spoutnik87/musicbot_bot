@@ -1,9 +1,7 @@
 package fr.spoutnik87
 
-import fr.spoutnik87.reader.ClearTrackReader
-import fr.spoutnik87.reader.PlayTrackReader
-import fr.spoutnik87.reader.StopTrackReader
-import fr.spoutnik87.reader.UpdateTrackPositionReader
+import fr.spoutnik87.bot.*
+import fr.spoutnik87.reader.*
 import io.ktor.application.call
 import io.ktor.http.HttpStatusCode
 import io.ktor.request.receive
@@ -13,16 +11,26 @@ import io.ktor.routing.Routing
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.route
+import io.ktor.util.getOrFail
 
-fun Routing.root(discordBot: DiscordBot) {
+@UseExperimental(io.ktor.util.KtorExperimentalAPI::class)
+fun Routing.root() {
+
+    val commandList = HashMap<String, WebCommand>()
+    commandList["play"] = PlayContentCommand()
+    commandList["stop"] = StopContentCommand()
+    commandList["clear"] = ClearQueueCommand()
+    commandList["setPosition"] = SetPositionCommand()
+    commandList["pause"] = PauseCommand()
+    commandList["unPause"] = UnPauseCommand()
 
     route("server") {
         /**
          * Get server status
          */
         get("/{guildId}") {
-            val guildId = call.parameters["guildId"]
-            val server = discordBot.serverList[guildId]
+            val guildId = call.parameters.getOrFail("guildId")
+            val server = BotApplication.getServer(guildId)
             if (server == null) {
                 call.respond(HttpStatusCode.BadRequest)
             } else {
@@ -34,12 +42,12 @@ fun Routing.root(discordBot: DiscordBot) {
          */
         post("/play/{guildId}") {
             val reader = call.receive<PlayTrackReader>()
-            val guildId = call.parameters["guildId"]
-            val server = discordBot.serverList[guildId]
+            val guildId = call.parameters.getOrFail("guildId")
+            val server = BotApplication.getServer(guildId)
             if (server == null) {
                 call.respond(HttpStatusCode.BadRequest)
             } else {
-                server.addTrack(reader.id, reader.initiator)
+                commandList["play"]?.execute(WebRequestEvent(reader), server)
                 call.respond(server.getStatus())
             }
         }
@@ -48,12 +56,12 @@ fun Routing.root(discordBot: DiscordBot) {
          */
         post("/stop/{guildId}") {
             val reader = call.receive<StopTrackReader>()
-            val guildId = call.parameters["guildId"]
-            val server = discordBot.serverList[guildId]
+            val guildId = call.parameters.getOrFail("guildId")
+            val server = BotApplication.getServer(guildId)
             if (server == null) {
                 call.respond(HttpStatusCode.BadRequest)
             } else {
-                server.removeTrack(reader.id, reader.initiator)
+                commandList["stop"]?.execute(WebRequestEvent(reader), server)
                 call.respond(server.getStatus())
             }
         }
@@ -61,13 +69,13 @@ fun Routing.root(discordBot: DiscordBot) {
          * Clear queue
          */
         post("/clear/{guildId}") {
-            val reader = call.receive<ClearTrackReader>()
-            val guildId = call.parameters["guildId"]
-            val server = discordBot.serverList[guildId]
+            val reader = call.receive<ClearQueueReader>()
+            val guildId = call.parameters.getOrFail("guildId")
+            val server = BotApplication.getServer(guildId)
             if (server == null) {
                 call.respond(HttpStatusCode.BadRequest)
             } else {
-                server.clearTracks(reader.initiator)
+                commandList["clear"]?.execute(WebRequestEvent(reader), server)
                 call.respond(server.getStatus())
             }
         }
@@ -76,19 +84,49 @@ fun Routing.root(discordBot: DiscordBot) {
          */
         post("/position/{guildId}") {
             val reader = call.receive<UpdateTrackPositionReader>()
-            val guildId = call.parameters["guildId"]
-            val server = discordBot.serverList[guildId]
+            val guildId = call.parameters.getOrFail("guildId")
+            val server = BotApplication.getServer(guildId)
             if (server == null) {
                 call.respond(HttpStatusCode.BadRequest)
             } else {
-                server.updateTrackPosition(reader.id, reader.initiator, reader.position)
+                commandList["setPosition"]?.execute(WebRequestEvent(reader), server)
+                call.respond(server.getStatus())
+            }
+        }
+
+        /**
+         * Pause playing content
+         */
+        post("/pause/{guildId}") {
+            val reader = call.receive<PauseTrackReader>()
+            val guildId = call.parameters.getOrFail("guildId")
+            val server = BotApplication.getServer(guildId)
+            if (server == null) {
+                call.respond(HttpStatusCode.BadRequest)
+            } else {
+                commandList["pause"]?.execute(WebRequestEvent(reader), server)
+                call.respond(server.getStatus())
+            }
+        }
+
+        /**
+         * Resume playing content
+         */
+        post("/unpause/{guildId}") {
+            val reader = call.receive<UnPauseTrackReader>()
+            val guildId = call.parameters.getOrFail("guildId")
+            val server = BotApplication.getServer(guildId)
+            if (server == null) {
+                call.respond(HttpStatusCode.BadRequest)
+            } else {
+                commandList["unPause"]?.execute(WebRequestEvent(reader), server)
                 call.respond(server.getStatus())
             }
         }
     }
 
     get("/stop") {
-        discordBot.stop()
+        BotApplication.stop()
         call.respondText("Bot stopped!")
     }
 }

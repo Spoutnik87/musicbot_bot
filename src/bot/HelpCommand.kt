@@ -1,15 +1,12 @@
 package fr.spoutnik87.bot
 
 import discord4j.core.event.domain.message.MessageCreateEvent
-import fr.spoutnik87.Command
-import fr.spoutnik87.DiscordBot
 
 class HelpCommand(
-    override val prefix: String,
-    override val discordBot: DiscordBot
-) : Command {
+    override val prefix: String
+) : TextCommand {
 
-    override suspend fun execute(messageEvent: MessageCreateEvent) {
+    override suspend fun execute(messageEvent: MessageCreateEvent, server: Server) {
         val channel = messageEvent.message.channel.block() ?: return
         channel.createMessage(
             """

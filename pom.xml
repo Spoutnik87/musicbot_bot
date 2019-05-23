@@ -84,7 +84,7 @@
         <dependency>
             <groupId>com.discord4j</groupId>
             <artifactId>discord4j-core</artifactId>
-            <version>3.0.4</version>
+            <version>3.0.5</version>
         </dependency>
         <dependency>
             <groupId>com.beust</groupId>
@@ -121,11 +121,6 @@
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <version>${kotlin_version}</version>
-                <configuration>
-                    <args>
-                        <arg>-Xcoroutines=enable</arg>
-                    </args>
-                </configuration>
                 <executions>
                     <execution>
                         <id>compile</id>

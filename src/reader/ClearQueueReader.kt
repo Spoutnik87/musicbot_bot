@@ -1,6 +1,5 @@
 package fr.spoutnik87.reader
 
-data class ClearTrackReader(
+data class ClearQueueReader(
     val initiator: String
-) {
-}
+)

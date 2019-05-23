@@ -4,6 +4,10 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 
 class Content(
     /**
+     * Used to identify this content in queue.
+     */
+    val uid: String,
+    /**
      * Content UUID
      */
     val id: String,
@@ -11,14 +15,30 @@ class Content(
      * The user who added this Content
      * User UUID
      */
-    val initiator: String,
-    var audioTrack: AudioTrack
+    val initiator: String
 ) {
-    val duration: Long
-        get() = audioTrack.duration
 
-    val position: Long
-        get() = audioTrack.position
+    var loaded = false
+        private set
+
+    var audioTrack: AudioTrack? = null
+        private set
+
+    val duration: Long?
+        get() = audioTrack?.duration
+
+    val position: Long?
+        get() = audioTrack?.position
 
     var startTime: Long? = null
+
+    fun loadTrack(track: AudioTrack) {
+        audioTrack = track
+        loaded = true
+    }
+
+    fun unloadTrack(track: AudioTrack) {
+        audioTrack = null
+        loaded = false
+    }
 }

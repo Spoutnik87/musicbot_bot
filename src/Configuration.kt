@@ -24,4 +24,6 @@ object Configuration {
 
     val apiUrl
         get() = application.environment.config.property("ktor.apiUrl").getString()
+
+    val superPrefix = "!!"
 }

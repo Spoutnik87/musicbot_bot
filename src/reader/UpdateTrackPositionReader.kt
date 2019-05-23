@@ -4,5 +4,4 @@ class UpdateTrackPositionReader(
     val id: String,
     val initiator: String,
     val position: Long
-) {
-}
+)

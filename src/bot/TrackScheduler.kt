@@ -9,18 +9,21 @@ import kotlinx.coroutines.launch
 
 class TrackScheduler(
     val server: Server,
-    val id: String,
-    val initiator: String
+    val content: Content
 ) : AudioLoadResultHandler {
 
     override fun trackLoaded(track: AudioTrack) {
+        content.loadTrack(track)
+        GlobalScope.launch {
+            server.onContentLoad(content)
+        }
         /**
          * Add content to the queue and trigger an event.
          */
-        server.queue.addContent(Content(id, initiator, track))
+        /*server.queue.addContent(Content(id, initiator, track))
         GlobalScope.launch {
             server.onTrackLoad()
-        }
+        }*/
     }
 
     override fun playlistLoaded(playlist: AudioPlaylist) {}
