@@ -1,62 +1,43 @@
 package fr.spoutnik87.bot
 
-import com.beust.klaxon.Klaxon
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
-import com.sedmelluq.discord.lavaplayer.player.event.TrackEndEvent
-import com.sedmelluq.discord.lavaplayer.player.event.TrackStartEvent
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import discord4j.core.`object`.entity.Guild
-import fr.spoutnik87.DiscordBot
-import fr.spoutnik87.model.MusicbotRestDecodedLinkToken
-import fr.spoutnik87.model.MusicbotRestServerModel
+import fr.spoutnik87.BotApplication
+import fr.spoutnik87.Configuration
+import fr.spoutnik87.RestClient
+import fr.spoutnik87.model.ContentViewModel
+import fr.spoutnik87.model.QueueViewModel
+import fr.spoutnik87.model.RestServerModel
+import fr.spoutnik87.viewmodel.ServerViewModel
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import org.apache.commons.codec.binary.Base64
-import org.apache.commons.codec.binary.StringUtils
 
 class Server(
-    val discordBot: DiscordBot,
     val guild: Guild,
     val player: AudioPlayer
-) {
+) : QueueListener, ContentListener {
 
-    private var server: MusicbotRestServerModel? = null
-    val audioProvider = LavaPlayerAudioProvider(player)
+    private var server: RestServerModel? = null
     var initialized = false
     var linkable = false
 
-    private var currentTrack: AudioTrack? = null
+    var playingContent: Content? = null
+        private set
 
-    val isPlayingTrack: Boolean
-        get() = player.playingTrack != null
-
-    val trackStartTime: Long? = null
+    val bot = Bot(this)
+    val queue = Queue(this)
 
     init {
-        runBlocking {
-            launch {
-                loadServerData()
-            }
-        }
-        player.addListener {
-            if (it is TrackStartEvent) {
-                onTrackStart()
-            } else if (it is TrackEndEvent) {
-                onTrackEnd()
-            }
+        GlobalScope.launch {
+            loadServerData()
         }
     }
 
-    fun onTrackStart() {
-        println("Track started")
-    }
-
-    fun onTrackEnd() {
-        println("Track ended")
-    }
-
+    /**
+     * Load initial data.
+     */
     suspend fun loadServerData() {
-        val server = discordBot.musicbotRestClient.getServerByGuildId(guild.id)
+        val server = RestClient.getServerByGuildId(guild.id.asString())
         if (server == null) {
             linkable = true
             initialized = false
@@ -67,21 +48,110 @@ class Server(
         }
     }
 
-    suspend fun linkServer(base64encodedLinkToken: String) {
+    suspend fun playContent(content: Content) {
+        if (playingContent == null) {
+            playingContent = content
+            bot.reset()
+            val scheduler = TrackScheduler(this, content)
+            BotApplication.playerManager.loadItem(Configuration.filesPath + "media\\" + content.id, scheduler)
+            content.startTime = System.currentTimeMillis()
+        } else {
+            queue.addContent(content)
+        }
+    }
+
+    suspend fun stopPlayingContent() {
+        if (playingContent == null) {
+            return
+        }
+        bot.stopTrackWithoutEvent()
+        playingContent = null
+    }
+
+    suspend fun playNextContent() {
+        val content = queue.next()
+        if (content != null) {
+            playContent(content)
+        } else {
+            bot.leaveVoiceChannel()
+        }
+    }
+
+    suspend fun clearContents() {
+        stopPlayingContent()
+        queue.clear()
+        bot.leaveVoiceChannel()
+    }
+
+    fun setContentPosition(position: Long) {
+        if (playingContent != null) {
+            bot.setTrackPosition(position)
+        }
+    }
+
+    suspend fun linkServer(linkToken: String, userId: String): RestServerModel? {
         try {
-            val decodedLinkToken = Klaxon().parse<MusicbotRestDecodedLinkToken>(
-                StringUtils.newStringUtf8(
-                    Base64.decodeBase64(base64encodedLinkToken)
-                )
-            ) ?: return
-            val server = discordBot.musicbotRestClient.linkGuildToServer(
-                decodedLinkToken.serverId,
-                guild.id.toString(),
-                decodedLinkToken.token
-            ) ?: return
+            val server = RestClient.linkGuildToServer(
+                userId,
+                guild.id.asString(),
+                linkToken
+            ) ?: return null
             this.server = server
+            this.linkable = false
+            return server
         } catch (e: Exception) {
-            println("An error happened during an attempt to link Guild ${guild.id} to a server.")
+            println("An error happened during an attempt to link Guild ${guild.id.asString()} to a server.")
+        }
+        return null
+    }
+
+    fun getStatus(): ServerViewModel {
+        return ServerViewModel(guild.id.asString(), QueueViewModel(queue.getAllContents()
+            .map { ContentViewModel(it.uid, it.id, it.initiator, null, null, null) }), playingContent.let {
+            if (it != null) {
+                ContentViewModel(it.uid, it.id, it.initiator, it.startTime, it.position ?: 0, bot.isPaused)
+            } else {
+                null
+            }
+        })
+    }
+
+    fun pauseContent() {
+        bot.pausePlayingTrack()
+    }
+
+    fun resumeContent() {
+        bot.resumePlayingTrack()
+        playingContent?.loadTrack(bot.playingTrack)
+    }
+
+    override suspend fun onAddContent(content: Content) {}
+
+    override suspend fun onRemoveContent(content: Content) {}
+
+    override suspend fun onClear() {}
+
+    override suspend fun onContentStart() {
+        playingContent?.startTime = System.currentTimeMillis()
+    }
+
+    override suspend fun onContentStop() {
+        playingContent = null
+        playNextContent()
+    }
+
+    /**
+     * Called when a content is ready to play.
+     */
+    override suspend fun onContentLoad(content: Content) {
+        if (bot.currentChannelId == null) {
+            if (!bot.joinVoiceChannel(content.initiator)) {
+                playingContent = null
+            }
+        }
+        val track = content.audioTrack
+        if (track != null) {
+            bot.playTrack(track)
         }
     }
 }

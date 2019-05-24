@@ -1,6 +1,6 @@
 package fr.spoutnik87.model
 
-data class MusicbotRestLoginModel(
+data class RestLoginModel(
     val email: String,
     val password: String
 ) {

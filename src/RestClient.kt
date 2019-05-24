@@ -1,32 +1,45 @@
 package fr.spoutnik87
 
 import com.beust.klaxon.Klaxon
-import discord4j.core.`object`.util.Snowflake
-import fr.spoutnik87.model.MusicbotRestLoginModel
-import fr.spoutnik87.model.MusicbotRestServerLinkModel
-import fr.spoutnik87.model.MusicbotRestServerModel
+import fr.spoutnik87.model.RestLoginModel
+import fr.spoutnik87.model.RestServerJoinModel
+import fr.spoutnik87.model.RestServerLinkModel
+import fr.spoutnik87.model.RestServerModel
+import fr.spoutnik87.util.retry
 import io.ktor.client.HttpClient
 import io.ktor.client.call.HttpClientCall
 import io.ktor.client.call.call
 import io.ktor.client.request.header
 import io.ktor.client.response.readText
+import io.ktor.content.TextContent
+import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.runBlocking
 
-class MusicbotRestClient(
-    val discordBot: DiscordBot
-) {
+object RestClient {
 
     private var token: String? = null
 
+    /**
+     * Blocking function. Retry until token is obtained.
+     */
+    fun loadToken() {
+        runBlocking {
+            retry(60) {
+                login()
+            }
+        }
+    }
+
     private suspend fun login() {
         val call = doRequestWithBody(
-            "${discordBot.configuration.apiUrl}/login",
+            "${Configuration.apiUrl}/login",
             HttpMethod.Post,
             Klaxon().toJsonString(
-                MusicbotRestLoginModel(
-                    discordBot.configuration.username,
-                    discordBot.configuration.password
+                RestLoginModel(
+                    Configuration.username,
+                    Configuration.password
                 )
             ),
             false
@@ -36,18 +49,26 @@ class MusicbotRestClient(
         }
     }
 
-    suspend fun getServerByGuildId(guildId: Snowflake): MusicbotRestServerModel? {
-        return makeRequest<MusicbotRestServerModel>(
-            "${discordBot.configuration.apiUrl}/server/guild/$guildId",
+    suspend fun getServerByGuildId(guildId: String): RestServerModel? {
+        return makeRequest<RestServerModel>(
+            "${Configuration.apiUrl}/server/guild/$guildId",
             HttpMethod.Get
         )
     }
 
-    suspend fun linkGuildToServer(serverId: String, guildId: String, token: String): MusicbotRestServerModel? {
+    suspend fun linkGuildToServer(userId: String, guildId: String, token: String): RestServerModel? {
         return makeRequestWithBody(
-            "${discordBot.configuration.apiUrl}/server/link/$serverId",
+            "${Configuration.apiUrl}/server/link",
             HttpMethod.Post,
-            Klaxon().toJsonString(MusicbotRestServerLinkModel(guildId, token))
+            Klaxon().toJsonString(RestServerLinkModel(userId, guildId, token))
+        )
+    }
+
+    suspend fun joinServer(userId: String, guildId: String, token: String): Any? {
+        return makeRequestWithBody(
+            "${Configuration.apiUrl}/user/joinServer",
+            HttpMethod.Post,
+            Klaxon().toJsonString(RestServerJoinModel(userId, guildId, token))
         )
     }
 
@@ -91,7 +112,8 @@ class MusicbotRestClient(
         val call = client.call(url) {
             this.method = method
             if (withToken) header("Authorization", "Bearer $token")
-            if (body != null) this.body = body
+            if (body != null && body is String) this.body =
+                TextContent(body, contentType = ContentType.Application.Json)
         }
         return call
     }
