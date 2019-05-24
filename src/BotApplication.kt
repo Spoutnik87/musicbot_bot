@@ -6,6 +6,7 @@ import com.sedmelluq.discord.lavaplayer.track.playback.NonAllocatingAudioFrameBu
 import discord4j.core.DiscordClient
 import discord4j.core.DiscordClientBuilder
 import discord4j.core.`object`.entity.Guild
+import discord4j.core.event.domain.VoiceStateUpdateEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
 import fr.spoutnik87.bot.*
 import kotlinx.coroutines.GlobalScope
@@ -47,7 +48,12 @@ object BotApplication {
                 }
             }
         }.subscribe()
-
+        client.eventDispatcher.on(VoiceStateUpdateEvent::class.java).doOnNext {
+            val bot = getServer(it.current.guildId.asString())?.bot
+            if (bot != null) {
+                bot.voiceStates[it.current.userId] = it.current
+            }
+        }.subscribe()
         playerManager.configuration.setFrameBufferFactory(::NonAllocatingAudioFrameBuffer)
         AudioSourceManagers.registerRemoteSources(playerManager)
         AudioSourceManagers.registerLocalSource(playerManager)

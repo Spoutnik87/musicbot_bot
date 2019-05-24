@@ -3,12 +3,14 @@ package fr.spoutnik87.bot
 import com.sedmelluq.discord.lavaplayer.player.event.TrackEndEvent
 import com.sedmelluq.discord.lavaplayer.player.event.TrackStartEvent
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import discord4j.core.`object`.VoiceState
 import discord4j.core.`object`.util.Permission
 import discord4j.core.`object`.util.Snowflake
 import discord4j.voice.VoiceConnection
 import fr.spoutnik87.BotApplication
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 
 class Bot(
     private val server: Server
@@ -32,6 +34,8 @@ class Bot(
 
     private var fireStopTrackEvent = true
 
+    var voiceStates = ConcurrentHashMap<Snowflake, VoiceState>()
+
     init {
         server.player.addListener {
             GlobalScope.launch {
@@ -51,10 +55,12 @@ class Bot(
     suspend fun canJoin(userId: String) = canJoin(Snowflake.of(userId))
 
     suspend fun canJoin(userId: Snowflake): Boolean {
-        val user = BotApplication.client.getUserById(userId).block()
-        val member = user?.asMember(server.guild.id)?.block() ?: return false
-        val voiceState = member.voiceState.block()
-        val channel = voiceState?.channel?.block() ?: return false
+        val voiceState = voiceStates[userId] ?: return false
+        if (!voiceState.channelId.isPresent) {
+            return false
+        }
+        val channel = voiceState.channel.block() ?: return false
+        val member = BotApplication.client.getMemberById(server.guild.id, userId).block() ?: return false
         val permissions = channel.getEffectivePermissions(member.id).block()?.asEnumSet() ?: return false
         return permissions.contains(Permission.CONNECT) && permissions.contains(Permission.SPEAK)
     }
@@ -63,10 +69,8 @@ class Bot(
         if (currentChannelId != null) {
             leaveVoiceChannel()
         }
-        val user = BotApplication.client.getUserById(userId).block()
-        val member = user?.asMember(server.guild.id)?.block() ?: return false
-        val voiceState = member.voiceState.block()
-        val channel = voiceState?.channel?.block() ?: return false
+        val voiceState = voiceStates[userId] ?: return false
+        val channel = voiceState.channel.block() ?: return false
         voiceConnection = channel.join {
             it.setProvider(audioProvider)
         }.block() ?: return false
