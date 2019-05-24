@@ -10,15 +10,16 @@ import discord4j.core.event.domain.message.MessageCreateEvent
 import fr.spoutnik87.bot.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 
 object BotApplication {
 
     lateinit var client: DiscordClient
     private var started = false
 
-    private val serverList = HashMap<String, Server>()
+    private val serverList = ConcurrentHashMap<String, Server>()
 
-    private val commandList = HashMap<String, TextCommand>()
+    private val commandList = ConcurrentHashMap<String, TextCommand>()
 
     val playerManager = DefaultAudioPlayerManager()
 

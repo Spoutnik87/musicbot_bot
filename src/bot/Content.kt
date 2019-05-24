@@ -37,7 +37,7 @@ class Content(
         loaded = true
     }
 
-    fun unloadTrack(track: AudioTrack) {
+    fun unloadTrack() {
         audioTrack = null
         loaded = false
     }

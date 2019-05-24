@@ -10,7 +10,7 @@ import java.text.DateFormat
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
 fun Application.module(testing: Boolean = false) {
-    val configuration = Configuration(this)
+    Configuration(this)
     BotApplication.start()
 
     routing {

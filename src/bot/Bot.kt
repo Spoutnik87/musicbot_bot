@@ -3,7 +3,6 @@ package fr.spoutnik87.bot
 import com.sedmelluq.discord.lavaplayer.player.event.TrackEndEvent
 import com.sedmelluq.discord.lavaplayer.player.event.TrackStartEvent
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
-import discord4j.core.`object`.VoiceState
 import discord4j.core.`object`.util.Permission
 import discord4j.core.`object`.util.Snowflake
 import discord4j.voice.VoiceConnection
@@ -32,8 +31,6 @@ class Bot(
         get() = pausedPosition != null
 
     private var fireStopTrackEvent = true
-
-    var voiceStates = HashMap<Snowflake, VoiceState>()
 
     init {
         server.player.addListener {
@@ -94,6 +91,7 @@ class Bot(
         if (isPlayingTrack) {
             stopTrackWithoutEvent()
         }
+        pausedPosition = null
         track = audioTrack.makeClone()
         server.player.playTrack(audioTrack)
     }
@@ -119,14 +117,20 @@ class Bot(
      * @param position Position in millis
      */
     fun setTrackPosition(position: Long): Boolean {
-        if (!isPlayingTrack) {
+        if (!isPlayingTrack && !isPaused) {
             return false
         }
         val track = this.track ?: return false
-        stopTrackWithoutEvent()
-        track.position = position
-        playTrack(track)
-        server.playingContent?.loadTrack(track)
+        if (isPaused) {
+            pausedPosition = position
+            track.position = position
+            server.playingContent?.loadTrack(track)
+        } else {
+            stopTrackWithoutEvent()
+            track.position = position
+            playTrack(track)
+            server.playingContent?.loadTrack(track)
+        }
         return true
     }
 
@@ -153,6 +157,10 @@ class Bot(
         }
         track?.position = pausedPosition ?: return
         playTrack(track ?: return)
+    }
+
+    fun reset() {
+        track = null
         pausedPosition = null
     }
 }

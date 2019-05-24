@@ -51,6 +51,7 @@ class Server(
     suspend fun playContent(content: Content) {
         if (playingContent == null) {
             playingContent = content
+            bot.reset()
             val scheduler = TrackScheduler(this, content)
             BotApplication.playerManager.loadItem(Configuration.filesPath + "media\\" + content.id, scheduler)
             content.startTime = System.currentTimeMillis()
@@ -78,7 +79,7 @@ class Server(
 
     suspend fun clearContents() {
         stopPlayingContent()
-        queue.clearQueue()
+        queue.clear()
         bot.leaveVoiceChannel()
     }
 
@@ -128,7 +129,7 @@ class Server(
 
     override suspend fun onRemoveContent(content: Content) {}
 
-    override suspend fun onClearQueue() {}
+    override suspend fun onClear() {}
 
     override suspend fun onContentStart() {
         playingContent?.startTime = System.currentTimeMillis()

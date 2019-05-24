@@ -14,5 +14,5 @@ interface QueueListener {
     /**
      * Called when the queue is cleared.
      */
-    suspend fun onClearQueue()
+    suspend fun onClear()
 }

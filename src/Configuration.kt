@@ -2,6 +2,7 @@ package fr.spoutnik87
 
 import io.ktor.application.Application
 
+@UseExperimental(io.ktor.util.KtorExperimentalAPI::class)
 object Configuration {
 
     private lateinit var application: Application

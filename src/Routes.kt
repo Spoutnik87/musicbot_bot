@@ -12,11 +12,12 @@ import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.route
 import io.ktor.util.getOrFail
+import java.util.concurrent.ConcurrentHashMap
 
 @UseExperimental(io.ktor.util.KtorExperimentalAPI::class)
 fun Routing.root() {
 
-    val commandList = HashMap<String, WebCommand>()
+    val commandList = ConcurrentHashMap<String, WebCommand>()
     commandList["play"] = PlayContentCommand()
     commandList["stop"] = StopContentCommand()
     commandList["clear"] = ClearQueueCommand()
