@@ -36,8 +36,6 @@ class Bot(
 
     var voiceStates = ConcurrentHashMap<Snowflake, VoiceState>()
 
-    var state: BotState = ExitedState(this)
-
     init {
         server.player.addListener {
             GlobalScope.launch {
