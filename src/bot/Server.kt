@@ -24,6 +24,9 @@ class Server(
     var playingContent: Content? = null
         private set
 
+    val isPlayingContent: Boolean
+        get() = playingContent != null
+
     val bot = Bot(this)
     val queue = Queue(this)
 
@@ -49,9 +52,8 @@ class Server(
     }
 
     suspend fun playContent(content: Content) {
-        if (playingContent == null) {
+        if (!isPlayingContent) {
             playingContent = content
-            bot.reset()
             val scheduler = TrackScheduler(this, content)
             BotApplication.playerManager.loadItem(Configuration.filesPath + "media\\" + content.id, scheduler)
             content.startTime = System.currentTimeMillis()
@@ -61,7 +63,7 @@ class Server(
     }
 
     suspend fun stopPlayingContent() {
-        if (playingContent == null) {
+        if (!isPlayingContent) {
             return
         }
         bot.stopTrackWithoutEvent()
@@ -135,7 +137,9 @@ class Server(
         playingContent?.startTime = System.currentTimeMillis()
     }
 
-    override suspend fun onContentStop() {
+    override suspend fun onContentStop() {}
+
+    override suspend fun onContentEnd() {
         playingContent = null
         playNextContent()
     }
@@ -147,6 +151,7 @@ class Server(
         if (bot.currentChannelId == null) {
             if (!bot.joinVoiceChannel(content.initiator)) {
                 playingContent = null
+                return
             }
         }
         val track = content.audioTrack

@@ -36,6 +36,8 @@ class Bot(
 
     var voiceStates = ConcurrentHashMap<Snowflake, VoiceState>()
 
+    var state: BotState = ExitedState(this)
+
     init {
         server.player.addListener {
             GlobalScope.launch {
@@ -46,6 +48,7 @@ class Bot(
                         server.onContentStop()
                     } else {
                         fireStopTrackEvent = true
+                        server.onContentEnd()
                     }
                 }
             }
@@ -161,10 +164,5 @@ class Bot(
         }
         track?.position = pausedPosition ?: return
         playTrack(track ?: return)
-    }
-
-    fun reset() {
-        track = null
-        pausedPosition = null
     }
 }
