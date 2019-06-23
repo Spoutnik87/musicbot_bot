@@ -6,7 +6,7 @@ class StopContentCommand : WebCommand {
 
     override suspend fun execute(event: WebRequestEvent, server: Server) {
         val reader = event.payload as StopContentReader
-        if (reader.uid == server.playingContent?.uid) {
+        if (reader.uid == server.player.getPlayingContent()?.uid) {
             server.stopPlayingContent()
             server.playNextContent()
         } else {
