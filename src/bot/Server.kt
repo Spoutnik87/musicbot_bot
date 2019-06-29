@@ -45,10 +45,8 @@ class Server(
 
     suspend fun playContent(content: Content) {
         if (!player.isPlaying()) {
-            if (bot.canJoin(content.initiator)) {
-                if (bot.joinVoiceChannel(content.initiator)) {
-                    player.play(content)
-                }
+            if (bot.joinVoiceChannel(content.initiator)) {
+                player.play(content)
             }
         } else {
             queue.addContent(content)
