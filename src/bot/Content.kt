@@ -13,5 +13,9 @@ class Content(
      * The user who added this Content
      * User UUID
      */
-    val initiator: String
+    val initiator: String,
+    /**
+     * Link to external content. May be null
+     */
+    val link: String? = null
 )

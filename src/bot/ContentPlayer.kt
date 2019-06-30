@@ -50,7 +50,11 @@ class ContentPlayer(
         synchronized(lock) {
             stop()
             this.playingContent = content
-            BotApplication.playerManager.loadItem(Configuration.filesPath + "media\\" + content.id, this)
+            if (content.link != null) {
+                BotApplication.playerManager.loadItem(content.link, this)
+            } else {
+                BotApplication.playerManager.loadItem(Configuration.filesPath + "media\\" + content.id, this)
+            }
             loadingTrackSemaphore.acquire()
             if (playingAudioTrack != null) {
                 startTime = System.currentTimeMillis()
