@@ -34,6 +34,8 @@ class ContentPlayer(
 
     private var updatingPosition = false
 
+    private var manuallyStopping = false
+
     private val loadingTrackSemaphore = Semaphore(0)
 
     private val trackEventSemaphore = Semaphore(0)
@@ -48,7 +50,11 @@ class ContentPlayer(
         synchronized(lock) {
             stop()
             this.playingContent = content
-            BotApplication.playerManager.loadItem(Configuration.filesPath + "media\\" + content.id, this)
+            if (content.link != null) {
+                BotApplication.playerManager.loadItem(content.link, this)
+            } else {
+                BotApplication.playerManager.loadItem(Configuration.filesPath + "media\\" + content.id, this)
+            }
             loadingTrackSemaphore.acquire()
             if (playingAudioTrack != null) {
                 startTime = System.currentTimeMillis()
@@ -85,8 +91,10 @@ class ContentPlayer(
             if (isPlaying()) {
                 pausing = true
                 paused = true
+                manuallyStopping = true
                 audioPlayer.stopTrack()
                 trackEventSemaphore.acquire()
+                manuallyStopping = false
                 pausing = false
                 listeners.forEach {
                     it.onContentPause(playingContent!!, playingAudioTrack?.position!!)
@@ -136,8 +144,10 @@ class ContentPlayer(
                     playingAudioTrack?.position = position
                 } else {
                     updatingPosition = true
+                    manuallyStopping = true
                     audioPlayer.stopTrack()
                     trackEventSemaphore.acquire()
+                    manuallyStopping = false
                     oldPosition = playingAudioTrack?.position
                     playingAudioTrack = audioTrack?.makeClone()
                     playingAudioTrack?.position = position
@@ -221,14 +231,14 @@ class ContentPlayer(
 
     private fun onTrackEvent(event: AudioEvent) {
         synchronized(lock) {
-            if (event !is TrackStartEvent && (pausing || updatingPosition)) {
+            if (event !is TrackStartEvent && manuallyStopping) {
                 trackEventSemaphore.release()
             }
         }
         if (event is TrackStartEvent) {
 
         } else if (event is TrackEndEvent) {
-            if (!pausing && !updatingPosition) {
+            if (!manuallyStopping) {
                 synchronized(lock) {
                     val playingContent = this.playingContent
                     clearState()

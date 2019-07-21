@@ -54,7 +54,7 @@ object BotApplication {
             if (server != null && bot != null) {
                 bot.voiceStates[it.current.userId] = it.current
                 // If the bot is playing, check if the bot is alone.
-                if (server.player.isPlaying()) {
+                if (server.player.isPlaying() && bot.currentChannelId != null) {
                     // Get number of people in the same channel as the bot.
                     val people = bot.voiceStates.filter { it1 -> it1.value.channelId.isPresent }.map { it1 ->
                         it1.value.channelId.get().toString()
