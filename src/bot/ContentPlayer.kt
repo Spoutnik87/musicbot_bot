@@ -53,7 +53,7 @@ class ContentPlayer(
             if (content.link != null) {
                 BotApplication.playerManager.loadItem(content.link, this)
             } else {
-                BotApplication.playerManager.loadItem(Configuration.filesPath + "media\\" + content.id, this)
+                BotApplication.playerManager.loadItem(Configuration.filesPath + "media/" + content.id, this)
             }
             loadingTrackSemaphore.acquire()
             if (playingAudioTrack != null) {

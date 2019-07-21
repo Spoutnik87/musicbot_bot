@@ -11,7 +11,7 @@ else
 	echo "Server is not running. New server is ready to start."
 fi
 
-java -jar target/musicbot_bot-*-jar-with-dependencies.jar > /dev/null 2>&1 &
+java -jar target/musicbot_bot-*-jar-with-dependencies.jar > logs.txt 2>&1 &
 
 PID=$!
 
