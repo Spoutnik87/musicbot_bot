@@ -10,8 +10,8 @@ import java.text.DateFormat
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
 fun Application.module(testing: Boolean = false) {
-    if (System.getProperty("os.name").equals("FreeBSD")) {
-        System.setProperty("os.name", "linux")
+    if (System.getProperty("os.name") == "FreeBSD") {
+        System.setProperty("os.name", "Linux")
     }
     Configuration(this)
     BotApplication.start()
