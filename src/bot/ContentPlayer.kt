@@ -58,6 +58,7 @@ class ContentPlayer(
             loadingTrackSemaphore.acquire()
             if (playingAudioTrack != null) {
                 startTime = System.currentTimeMillis()
+                playingAudioTrack?.position = playingContent?.position ?: 0
                 audioPlayer.playTrack(playingAudioTrack)
                 listeners.forEach {
                     it.onContentStart(content)
@@ -71,14 +72,36 @@ class ContentPlayer(
         }
     }
 
+    fun set(content: Content) {
+        synchronized(lock) {
+            if (isPlaying()) {
+                manuallyStopping = true
+                stop()
+                trackEventSemaphore.acquire()
+                manuallyStopping = false
+            }
+            play(content)
+        }
+    }
+
     /**
      * Stop the playing content.
      */
     fun stop() {
         synchronized(lock) {
             if (isPlaying()) {
-                clearState()
                 audioPlayer.stopTrack()
+            }
+        }
+    }
+
+    fun blockingStop() {
+        synchronized(lock) {
+            if (isPlaying()) {
+                manuallyStopping = true
+                audioPlayer.stopTrack()
+                trackEventSemaphore.acquire()
+                manuallyStopping = false
             }
         }
     }

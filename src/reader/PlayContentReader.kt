@@ -4,5 +4,7 @@ data class PlayContentReader(
     val uid: String,
     val id: String,
     val initiator: String,
-    val link: String?
+    val link: String?,
+    val name: String,
+    val duration: Long
 )

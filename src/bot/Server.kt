@@ -2,9 +2,9 @@ package fr.spoutnik87.bot
 
 import discord4j.core.`object`.entity.Guild
 import fr.spoutnik87.RestClient
-import fr.spoutnik87.model.ContentViewModel
-import fr.spoutnik87.model.QueueViewModel
 import fr.spoutnik87.model.RestServerModel
+import fr.spoutnik87.viewmodel.ContentViewModel
+import fr.spoutnik87.viewmodel.QueueViewModel
 import fr.spoutnik87.viewmodel.ServerViewModel
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -67,13 +67,22 @@ class Server(
     }
 
     suspend fun clearContents() {
-        stopPlayingContent()
         queue.clear()
+        stopPlayingContent()
         bot.leaveVoiceChannel()
     }
 
     fun setContentPosition(position: Long) {
         player.setPosition(position)
+    }
+
+    suspend fun replacePlayingContent(content: Content) {
+        if (!player.isPlaying()) {
+            if (bot.joinVoiceChannel(content.initiator)) {
+                player.play(content)
+            }
+        }
+        player.set(content)
     }
 
     suspend fun linkServer(linkToken: String, userId: String): RestServerModel? {
@@ -94,7 +103,8 @@ class Server(
 
     fun getStatus(): ServerViewModel {
         return ServerViewModel(guild.id.asString(), QueueViewModel(queue.getAllContents()
-            .map { ContentViewModel(it.uid, it.id, it.initiator, null, null, null) }), player.getState().let {
+            .map { ContentViewModel(it.uid, it.id, it.initiator, null, null, null, it.name, it.duration) }),
+            player.getState().let {
             if (it.content != null) {
                 ContentViewModel(
                     it.content.uid,
@@ -102,7 +112,9 @@ class Server(
                     it.content.initiator,
                     it.startTime,
                     it.position ?: 0,
-                    it.paused
+                    it.paused,
+                    it.content.name,
+                    it.content.duration
                 )
             } else {
                 null
