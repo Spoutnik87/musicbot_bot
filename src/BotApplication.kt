@@ -99,6 +99,7 @@ object BotApplication {
         commandList["replay"] = ReplayTextCommand("replay")
         commandList["force"] = ForceTextCommand("force")
         commandList["setpos"] = SetPositionTextCommand("setpos")
+        commandList["dev"] = DevTextCommand("dev")
     }
 
     fun getServer(guildId: String) = serverList[guildId]

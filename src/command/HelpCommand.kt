@@ -24,13 +24,9 @@ class HelpCommand(
             -> ${Configuration.superPrefix}pause : Met en pause le morceau en cours.
             -> ${Configuration.superPrefix}resume : Reprend le morceau en cours.
             -> ${Configuration.superPrefix}setpos <position> : Joue le morceau à partir du temps indiqué. (en secondes)
+            -> ${Configuration.superPrefix}dev : Affiche des informations pour les développeurs.
             
-            -> J'ai été conçu par @Spout#1308 et je suis open source.
-            -> Mes dépôts sont accessible sur Github aux adresses :
-            -> https://github.com/spoutnik87/musicbot_bot : Module communiquant avec l'API Discord
-            -> https://github.com/spoutnik87/musicbot_web : L'interface Web pouvant me piloter
-            -> https://github.com/spoutnik87/musicbot_rest : L'API REST servant d'interface entre les deux autres modules.
-            
+            -> J'ai été conçu par @Spout#1308 et je suis open source. 
             -> Si vous avez des suggestions ou souhaitez contribuer, n'hesitez pas !
             -------------------------------------------------------------------------
             """.trimIndent()
