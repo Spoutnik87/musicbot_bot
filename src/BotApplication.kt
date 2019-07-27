@@ -9,6 +9,7 @@ import discord4j.core.`object`.entity.Guild
 import discord4j.core.event.domain.VoiceStateUpdateEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
 import fr.spoutnik87.bot.*
+import fr.spoutnik87.command.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
@@ -89,6 +90,15 @@ object BotApplication {
         commandList["help"] = HelpCommand("help")
         commandList["link"] = LinkCommand("link")
         commandList["join"] = JoinCommand("join")
+        commandList["playlist"] = PlaylistTextCommand("playlist")
+        commandList["play"] = PlayTextCommand("play")
+        commandList["stop"] = StopTextCommand("stop")
+        commandList["skip"] = SkipTextCommand("skip")
+        commandList["resume"] = ResumeTextCommand("resume")
+        commandList["pause"] = PauseTextCommand("pause")
+        commandList["replay"] = ReplayTextCommand("replay")
+        commandList["force"] = ForceTextCommand("force")
+        commandList["setpos"] = SetPositionTextCommand("setpos")
     }
 
     fun getServer(guildId: String) = serverList[guildId]

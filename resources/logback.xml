@@ -10,4 +10,6 @@
     <logger name="org.eclipse.jetty" level="INFO"/>
     <logger name="io.netty" level="INFO"/>
     <logger name="discord4j.gateway" level="INFO"/>
+    <logger name="reactor.netty" level="INFO"/>
+    <logger name="discord4j.voice" level="INFO"/>
 </configuration>
