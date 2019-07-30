@@ -71,7 +71,7 @@ class Server(
 
     suspend fun clearContents() {
         queue.clear()
-        player.blockingStop()
+        player.stop()
         bot.leaveVoiceChannel()
     }
 
@@ -85,7 +85,7 @@ class Server(
      * @param content Content to be played
      */
     suspend fun replacePlayingContent(content: Content) {
-        if (player.isPlaying()) {
+        if (!player.isPlaying()) {
             if (bot.joinVoiceChannel(content.initiator)) {
                 player.play(content)
             }

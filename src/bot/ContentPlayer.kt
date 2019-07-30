@@ -53,6 +53,7 @@ class ContentPlayer(
     fun play(content: Content) {
         synchronized(lock) {
             blockingStop()
+            clearState()
             this.playingContent = content
             if (content.link != null) {
                 logger.debug("Playing a content with link : ${content.link} and uid : ${content.uid}")
@@ -94,7 +95,7 @@ class ContentPlayer(
         }
     }
 
-    fun blockingStop() {
+    private fun blockingStop() {
         synchronized(lock) {
             if (isPlaying()) {
                 logger.debug("Waiting for AudioPlayer stop event.")

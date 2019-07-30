@@ -10,6 +10,8 @@ class PauseTextCommand(override val prefix: String) : TextCommand {
 
     override suspend fun execute(messageEvent: MessageCreateEvent, server: Server) {
         logger.debug("A command has been received on server ${server.guild.id.asString()}")
+        val channel = messageEvent.message.channel.block() ?: return
         server.pauseContent()
+        channel.createMessage("Action effectuée").block()
     }
 }
