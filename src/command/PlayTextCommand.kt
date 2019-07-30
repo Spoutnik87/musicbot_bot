@@ -15,11 +15,12 @@ class PlayTextCommand(
     private val logger = LoggerFactory.getLogger(PlayTextCommand::class.java)
 
     override suspend fun execute(messageEvent: MessageCreateEvent, server: Server) {
+        logger.debug("A command has been received on server ${server.guild.id.asString()}")
         if (!messageEvent.message.content.isPresent
             || !messageEvent.message.author.isPresent
         ) return
-        logger.debug("A command has been received on server ${server.guild.id.asString()}")
-        val options = messageEvent.message.content.get().split(" ")
+        val channel = messageEvent.message.channel.block() ?: return
+        val options = messageEvent.message.content.get().split(" ").filter { it != "" }
         if (options.size < 2) return
         val link = URLHelper.createSafeYoutubeLink(options[1])
         if (link != null) {
@@ -33,6 +34,9 @@ class PlayTextCommand(
             Utils.loadMetadata(link)?.let {
                 server.playContent(Content(UUID.v4(), null, userId, link, position, it.title, it.duration))
             }
+            channel.createMessage("Action effectuée").block()
+        } else {
+            channel.createMessage("Le lien est incorrecte").block()
         }
     }
 }

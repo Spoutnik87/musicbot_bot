@@ -12,4 +12,8 @@
     <logger name="discord4j.gateway" level="INFO"/>
     <logger name="reactor.netty" level="INFO"/>
     <logger name="discord4j.voice" level="INFO"/>
+    <logger name="discord4j.rest" level="INFO"/>
+    <logger name="discord4j.dispatch" level="INFO"/>
+    <logger name="discord4j.gateway" level="INFO"/>
+    <logger name="discord4j.events" level="INFO"/>
 </configuration>
