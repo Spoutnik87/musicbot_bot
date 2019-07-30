@@ -8,11 +8,14 @@ import fr.spoutnik87.viewmodel.QueueViewModel
 import fr.spoutnik87.viewmodel.ServerViewModel
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 
 class Server(
     val guild: Guild,
     val player: ContentPlayer
 ) : QueueListener, ContentPlayerListener {
+
+    private val logger = LoggerFactory.getLogger(Server::class.java)
 
     private var server: RestServerModel? = null
     var initialized = false
@@ -68,7 +71,7 @@ class Server(
 
     suspend fun clearContents() {
         queue.clear()
-        stopPlayingContent()
+        player.blockingStop()
         bot.leaveVoiceChannel()
     }
 
@@ -76,13 +79,19 @@ class Server(
         player.setPosition(position)
     }
 
+    /**
+     * Force the specified content to be played.
+     * Replace the currently playing content if the bot is already playing something.
+     * @param content Content to be played
+     */
     suspend fun replacePlayingContent(content: Content) {
-        if (!player.isPlaying()) {
+        if (player.isPlaying()) {
             if (bot.joinVoiceChannel(content.initiator)) {
                 player.play(content)
             }
+        } else {
+            player.play(content)
         }
-        player.set(content)
     }
 
     suspend fun linkServer(linkToken: String, userId: String): RestServerModel? {
@@ -94,9 +103,10 @@ class Server(
             ) ?: return null
             this.server = server
             this.linkable = false
+            logger.debug("Guild with id ${guild.id.asString()} is successfully linked with server ${server.id}")
             return server
         } catch (e: Exception) {
-            println("An error happened during an attempt to link Guild ${guild.id.asString()} to a server.")
+            logger.error("An error happened during an attempt to link Guild ${guild.id.asString()} to a server.")
         }
         return null
     }

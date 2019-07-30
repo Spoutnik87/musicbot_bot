@@ -1,15 +1,19 @@
-package fr.spoutnik87.bot
+package fr.spoutnik87.command
 
 import discord4j.core.event.domain.message.MessageCreateEvent
 import fr.spoutnik87.Configuration
+import fr.spoutnik87.bot.Server
+import org.slf4j.LoggerFactory
 
 class HelpCommand(
     override val prefix: String
 ) : TextCommand {
 
+    private val logger = LoggerFactory.getLogger(HelpCommand::class.java)
+
     override suspend fun execute(messageEvent: MessageCreateEvent, server: Server) {
         val channel = messageEvent.message.channel.block() ?: return
-
+        logger.debug("A command has been received on server ${server.guild.id.asString()}")
         channel.createMessage(
             """
             ----------------------------- I am Musicbot -----------------------------

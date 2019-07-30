@@ -8,11 +8,15 @@ import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import fr.spoutnik87.BotApplication
 import fr.spoutnik87.Configuration
+import org.slf4j.LoggerFactory
 import java.util.concurrent.Semaphore
+import java.util.concurrent.atomic.AtomicBoolean
 
 class ContentPlayer(
     private val audioPlayer: AudioPlayer
 ) : AudioLoadResultHandler {
+
+    private val logger = LoggerFactory.getLogger(ContentPlayer::class.java)
 
     val provider = LavaPlayerAudioProvider(audioPlayer)
 
@@ -34,7 +38,7 @@ class ContentPlayer(
 
     private var updatingPosition = false
 
-    private var manuallyStopping = false
+    private var manuallyStopping = AtomicBoolean(false)
 
     private val loadingTrackSemaphore = Semaphore(0)
 
@@ -48,14 +52,18 @@ class ContentPlayer(
 
     fun play(content: Content) {
         synchronized(lock) {
-            stop()
+            blockingStop()
             this.playingContent = content
             if (content.link != null) {
+                logger.debug("Playing a content with link : ${content.link} and uid : ${content.uid}")
                 BotApplication.playerManager.loadItem(content.link, this)
             } else {
+                logger.debug("Playing a content with id : ${content.id} and uid : ${content.uid}")
                 BotApplication.playerManager.loadItem(Configuration.filesPath + "media/" + content.id, this)
             }
+            logger.debug("Waiting for content loading.")
             loadingTrackSemaphore.acquire()
+            logger.debug("A content has been loaded.")
             if (playingAudioTrack != null) {
                 startTime = System.currentTimeMillis()
                 playingAudioTrack?.position = playingContent?.position ?: 0
@@ -63,24 +71,14 @@ class ContentPlayer(
                 listeners.forEach {
                     it.onContentStart(content)
                 }
+                logger.debug("Content with uid : ${content.uid} has been started")
             } else {
                 clearState()
                 listeners.forEach {
                     it.onContentStartFailure(content)
                 }
+                logger.error("Failing to play the content with uid : ${content.uid}.")
             }
-        }
-    }
-
-    fun set(content: Content) {
-        synchronized(lock) {
-            if (isPlaying()) {
-                manuallyStopping = true
-                stop()
-                trackEventSemaphore.acquire()
-                manuallyStopping = false
-            }
-            play(content)
         }
     }
 
@@ -90,6 +88,7 @@ class ContentPlayer(
     fun stop() {
         synchronized(lock) {
             if (isPlaying()) {
+                logger.debug("Stopping played content.")
                 audioPlayer.stopTrack()
             }
         }
@@ -98,10 +97,12 @@ class ContentPlayer(
     fun blockingStop() {
         synchronized(lock) {
             if (isPlaying()) {
-                manuallyStopping = true
+                logger.debug("Waiting for AudioPlayer stop event.")
+                manuallyStopping.set(true)
                 audioPlayer.stopTrack()
                 trackEventSemaphore.acquire()
-                manuallyStopping = false
+                logger.debug("AudioPlayer stop event has been executed.")
+                manuallyStopping.set(false)
             }
         }
     }
@@ -114,14 +115,12 @@ class ContentPlayer(
             if (isPlaying()) {
                 pausing = true
                 paused = true
-                manuallyStopping = true
-                audioPlayer.stopTrack()
-                trackEventSemaphore.acquire()
-                manuallyStopping = false
+                blockingStop()
                 pausing = false
                 listeners.forEach {
                     it.onContentPause(playingContent!!, playingAudioTrack?.position!!)
                 }
+                logger.debug("Pausing played content.")
             }
         }
     }
@@ -142,6 +141,7 @@ class ContentPlayer(
                 listeners.forEach {
                     it.onContentResume(playingContent!!, playingAudioTrack?.position!!)
                 }
+                logger.debug("Resuming played content.")
             }
         }
     }
@@ -167,10 +167,7 @@ class ContentPlayer(
                     playingAudioTrack?.position = position
                 } else {
                     updatingPosition = true
-                    manuallyStopping = true
-                    audioPlayer.stopTrack()
-                    trackEventSemaphore.acquire()
-                    manuallyStopping = false
+                    blockingStop()
                     oldPosition = playingAudioTrack?.position
                     playingAudioTrack = audioTrack?.makeClone()
                     playingAudioTrack?.position = position
@@ -180,6 +177,7 @@ class ContentPlayer(
                 listeners.forEach {
                     it.onContentPositionChange(playingContent!!, oldPosition!!, position)
                 }
+                logger.debug("Updating position of played content.")
             }
         }
     }
@@ -250,18 +248,18 @@ class ContentPlayer(
         audioTrack = null
         playingAudioTrack = null
         startTime = null
+        logger.debug("ContentPlayer state has been cleared.")
     }
 
     private fun onTrackEvent(event: AudioEvent) {
-        synchronized(lock) {
-            if (event !is TrackStartEvent && manuallyStopping) {
-                trackEventSemaphore.release()
-            }
+        if (event !is TrackStartEvent && manuallyStopping.get()) {
+            trackEventSemaphore.release()
+            logger.debug("AudioPlayer stop event has been received.")
         }
         if (event is TrackStartEvent) {
 
         } else if (event is TrackEndEvent) {
-            if (!manuallyStopping) {
+            if (!manuallyStopping.get()) {
                 synchronized(lock) {
                     val playingContent = this.playingContent
                     clearState()
@@ -301,17 +299,21 @@ class ContentPlayer(
         this.audioTrack = track?.makeClone()
         this.playingAudioTrack = track
         loadingTrackSemaphore.release()
+        logger.debug("AudioPlayer trackLoaded event has been received.")
     }
 
     override fun playlistLoaded(playlist: AudioPlaylist) {
         loadingTrackSemaphore.release()
+        logger.debug("AudioPlayer playlistLoaded event has been received.")
     }
 
     override fun noMatches() {
         loadingTrackSemaphore.release()
+        logger.debug("AudioPlayer noMatches event has been received.")
     }
 
     override fun loadFailed(exception: FriendlyException) {
         loadingTrackSemaphore.release()
+        logger.debug("AudioPlayer loadFailed event has been received.")
     }
 }

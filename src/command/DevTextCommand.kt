@@ -2,11 +2,15 @@ package fr.spoutnik87.command
 
 import discord4j.core.event.domain.message.MessageCreateEvent
 import fr.spoutnik87.bot.Server
-import fr.spoutnik87.bot.TextCommand
+import org.slf4j.LoggerFactory
 
 class DevTextCommand(override val prefix: String) : TextCommand {
+
+    private val logger = LoggerFactory.getLogger(DevTextCommand::class.java)
+
     override suspend fun execute(messageEvent: MessageCreateEvent, server: Server) {
         val channel = messageEvent.message.channel.block() ?: return
+        logger.debug("A command has been received on server ${server.guild.id.asString()}")
 
         channel.createMessage(
             """
