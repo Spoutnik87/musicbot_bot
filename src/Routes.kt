@@ -1,6 +1,7 @@
 package fr.spoutnik87
 
-import fr.spoutnik87.bot.*
+import fr.spoutnik87.command.*
+import fr.spoutnik87.event.WebRequestEvent
 import fr.spoutnik87.reader.*
 import io.ktor.application.call
 import io.ktor.http.HttpStatusCode

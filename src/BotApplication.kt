@@ -8,10 +8,12 @@ import discord4j.core.DiscordClientBuilder
 import discord4j.core.`object`.entity.Guild
 import discord4j.core.event.domain.VoiceStateUpdateEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
-import fr.spoutnik87.bot.*
+import fr.spoutnik87.bot.ContentPlayer
+import fr.spoutnik87.bot.Server
 import fr.spoutnik87.command.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
 object BotApplication {
@@ -25,11 +27,14 @@ object BotApplication {
 
     val playerManager = DefaultAudioPlayerManager()
 
+    private val logger = LoggerFactory.getLogger(BotApplication.javaClass)
+
     fun start() {
         if (started) {
             return
         }
         started = true
+        logger.debug("BotApplication is starting")
         RestClient.loadToken()
 
         loadCommands()
@@ -75,9 +80,10 @@ object BotApplication {
 
         client.guilds.subscribe {
             if (it is Guild && serverList[it.id.asString()] == null) {
+                logger.debug("Server with id ${it.id.asString()} is initializing")
                 serverList[it.id.asString()] = Server(it, ContentPlayer(playerManager.createPlayer()))
             } else {
-                println("An error happened during Guild loading")
+                logger.error("An error happened during server with id ${it.id.asString()} initialization")
             }
         }
         /**
@@ -108,6 +114,7 @@ object BotApplication {
         if (!started) {
             return
         }
+        logger.debug("BotApplication is stopping")
         started = false
         client.logout().subscribe()
     }

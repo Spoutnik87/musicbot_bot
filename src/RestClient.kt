@@ -16,23 +16,35 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
+import org.slf4j.LoggerFactory
+import kotlin.system.exitProcess
 
 object RestClient {
 
     private var token: String? = null
+
+    private val logger = LoggerFactory.getLogger(RestClient.javaClass)
 
     /**
      * Blocking function. Retry until token is obtained.
      */
     fun loadToken() {
         runBlocking {
-            retry(60) {
-                login()
+            try {
+                retry(60) {
+                    login()
+                }
+            } catch (e: Exception) {
             }
+        }
+        if (token == null) {
+            logger.error("Failed to login. Token is null.")
+            exitProcess(-1)
         }
     }
 
     private suspend fun login() {
+        logger.debug("Sending login request to REST API.")
         val call = doRequestWithBody(
             "${Configuration.apiUrl}/login",
             HttpMethod.Post,
@@ -46,10 +58,14 @@ object RestClient {
         )
         if (call.response.status.value == HttpStatusCode.OK.value) {
             token = call.response.headers["Authorization"]?.substring("Bearer ".length)
+            logger.debug("A token has been received from REST API : $token")
+        } else {
+            logger.error("Unable to retrieve token from REST API.")
         }
     }
 
     suspend fun getServerByGuildId(guildId: String): RestServerModel? {
+        logger.debug("Retrieving a server by user id from REST API guildId : $guildId")
         return makeRequest<RestServerModel>(
             "${Configuration.apiUrl}/server/guild/$guildId",
             HttpMethod.Get
@@ -57,6 +73,7 @@ object RestClient {
     }
 
     suspend fun linkGuildToServer(userId: String, guildId: String, token: String): RestServerModel? {
+        logger.debug("Sending a link guild to server request to REST API userId : $userId and guildId : $guildId")
         return makeRequestWithBody(
             "${Configuration.apiUrl}/server/link",
             HttpMethod.Post,
@@ -65,6 +82,7 @@ object RestClient {
     }
 
     suspend fun joinServer(userId: String, guildId: String, token: String): Any? {
+        logger.debug("Sending a join guild request to REST API userId : $userId and guildId : $guildId")
         return makeRequestWithBody(
             "${Configuration.apiUrl}/user/joinServer",
             HttpMethod.Post,

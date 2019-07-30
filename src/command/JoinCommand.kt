@@ -1,12 +1,16 @@
-package fr.spoutnik87.bot
+package fr.spoutnik87.command
 
 import discord4j.core.event.domain.message.MessageCreateEvent
 import fr.spoutnik87.Configuration
 import fr.spoutnik87.RestClient
+import fr.spoutnik87.bot.Server
+import org.slf4j.LoggerFactory
 
 class JoinCommand(
     override val prefix: String
 ) : TextCommand {
+
+    private val logger = LoggerFactory.getLogger(JoinCommand::class.java)
 
     override suspend fun execute(messageEvent: MessageCreateEvent, server: Server) {
         if (!messageEvent.message.content.isPresent
@@ -14,6 +18,7 @@ class JoinCommand(
         ) {
             return
         }
+        logger.debug("A command has been received on server ${server.guild.id.asString()}")
         val token = messageEvent.message.content.get().substring(Configuration.superPrefix.length + prefix.length + 1)
         val userId = messageEvent.message.author.get().id.asString()
         val channel = messageEvent.message.channel.block() ?: return

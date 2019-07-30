@@ -1,6 +1,7 @@
-package fr.spoutnik87.bot
+package fr.spoutnik87.command
 
-import fr.spoutnik87.Command
+import fr.spoutnik87.bot.Server
+import fr.spoutnik87.event.WebRequestEvent
 
 /**
  * Base interface of Web Commands

@@ -1,7 +1,7 @@
-package fr.spoutnik87.bot
+package fr.spoutnik87.command
 
 import discord4j.core.event.domain.message.MessageCreateEvent
-import fr.spoutnik87.Command
+import fr.spoutnik87.bot.Server
 
 interface TextCommand : Command {
 

@@ -1,11 +1,15 @@
-package fr.spoutnik87.bot
+package fr.spoutnik87.command
 
 import discord4j.core.event.domain.message.MessageCreateEvent
 import fr.spoutnik87.Configuration
+import fr.spoutnik87.bot.Server
+import org.slf4j.LoggerFactory
 
 class LinkCommand(
     override val prefix: String
 ) : TextCommand {
+
+    private val logger = LoggerFactory.getLogger(LinkCommand::class.java)
 
     override suspend fun execute(messageEvent: MessageCreateEvent, server: Server) {
         if (!messageEvent.message.content.isPresent
@@ -17,6 +21,7 @@ class LinkCommand(
         if (!messageEvent.message.author.isPresent) {
             return
         }
+        logger.debug("A command has been received on server ${server.guild.id.asString()}")
         val userId = messageEvent.message.author.get().id.asString()
         val channel = messageEvent.message.channel.block() ?: return
         // messageEvent.message.delete().block()

@@ -1,4 +1,4 @@
-package fr.spoutnik87
+package fr.spoutnik87.command
 
 /**
  * Base interface of all commands.
