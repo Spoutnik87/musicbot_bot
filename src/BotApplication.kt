@@ -11,8 +11,12 @@ import discord4j.core.event.domain.message.MessageCreateEvent
 import fr.spoutnik87.bot.ContentPlayer
 import fr.spoutnik87.bot.Server
 import fr.spoutnik87.command.*
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.reactive.awaitFirst
+import kotlinx.coroutines.reactive.flow.asFlow
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
@@ -29,7 +33,7 @@ object BotApplication {
 
     private val logger = LoggerFactory.getLogger(BotApplication.javaClass)
 
-    fun start() {
+    suspend fun start() {
         if (started) {
             return
         }
@@ -40,56 +44,64 @@ object BotApplication {
         loadCommands()
 
         client = DiscordClientBuilder(Configuration.token).build()
-        client.eventDispatcher.on(MessageCreateEvent::class.java).doOnNext { event ->
-            if (event.message.content.isPresent && event.guildId.isPresent) {
-                val content = event.message.content.get()
-                val guildId = event.guildId.get().asString()
-                val server = serverList[guildId]
-                if (server != null) {
-                    commandList.filter { content.startsWith(Configuration.superPrefix + it.key) }.forEach {
-                        GlobalScope.launch {
-                            it.value.execute(event, server)
-                        }
-                    }
-                }
-            }
-        }.subscribe()
-        client.eventDispatcher.on(VoiceStateUpdateEvent::class.java).doOnNext {
-            val server = getServer(it.current.guildId.asString())
-            val bot = getServer(it.current.guildId.asString())?.bot
-            if (server != null && bot != null) {
-                bot.voiceStates[it.current.userId] = it.current
-                // If the bot is playing, check if the bot is alone.
-                if (server.player.isPlaying() && bot.currentChannelId != null) {
-                    // Get number of people in the same channel as the bot.
-                    val people = bot.voiceStates.filter { it1 -> it1.value.channelId.isPresent }.map { it1 ->
-                        it1.value.channelId.get().toString()
-                    }.filter { it1 -> it1 == bot.currentChannelId }.size
-                    // If the bot is alone, the bot leave the channel.
-                    if (people < 2) {
-                        GlobalScope.launch {
-                            server.clearContents()
-                        }
-                    }
-                }
-            }
-        }.subscribe()
+
         playerManager.configuration.setFrameBufferFactory(::NonAllocatingAudioFrameBuffer)
         AudioSourceManagers.registerRemoteSources(playerManager)
         AudioSourceManagers.registerLocalSource(playerManager)
 
-        client.guilds.subscribe {
-            if (it is Guild && serverList[it.id.asString()] == null) {
-                logger.debug("Server with id ${it.id.asString()} is initializing")
-                serverList[it.id.asString()] = Server(it, ContentPlayer(playerManager.createPlayer()))
-            } else {
-                logger.error("An error happened during server with id ${it.id.asString()} initialization")
+        coroutineScope {
+            async {
+                client.eventDispatcher.on(MessageCreateEvent::class.java).asFlow().onEach { event ->
+                    if (event.message.content.isPresent && event.guildId.isPresent) {
+                        val content = event.message.content.get()
+                        val guildId = event.guildId.get().asString()
+                        val server = serverList[guildId]
+                        if (server != null) {
+                            commandList.filter { content.startsWith(Configuration.superPrefix + it.key) }.forEach {
+                                it.value.execute(event, server)
+                            }
+                        }
+                    }
+                }.collect()
+            }
+
+            async {
+                client.eventDispatcher.on(VoiceStateUpdateEvent::class.java).asFlow().onEach {
+                    val server = getServer(it.current.guildId.asString())
+                    val bot = getServer(it.current.guildId.asString())?.bot
+                    if (server != null && bot != null) {
+                        bot.voiceStates[it.current.userId] = it.current
+                        // If the bot is playing, check if the bot is alone.
+                        if (server.player.isPlaying() && bot.currentChannelId != null) {
+                            // Get number of people in the same channel as the bot.
+                            val people = bot.voiceStates.filter { it1 -> it1.value.channelId.isPresent }.map { it1 ->
+                                it1.value.channelId.get().asString()
+                            }.filter { it1 -> it1 == bot.currentChannelId }.size
+                            // If the bot is alone, the bot leave the channel.
+                            if (people < 2) {
+                                logger.info("The bot is alone in a channel on server : ${server.guild.id.asString()}. It is now leaving the channel.")
+                                server.clearContents()
+                            }
+                        }
+                    }
+                }.collect()
+            }
+
+            async {
+                client.guilds.asFlow().onEach {
+                    if (it is Guild && serverList[it.id.asString()] == null) {
+                        logger.debug("Server with id ${it.id.asString()} is initializing")
+                        serverList[it.id.asString()] = Server(it, ContentPlayer(playerManager.createPlayer()))
+                    } else {
+                        logger.error("An error happened during server with id ${it.id.asString()} initialization")
+                    }
+                }.collect()
+            }
+
+            async {
+                client.login().awaitFirst()
             }
         }
-        /**
-         * No need to block. This app is alive until Ktor web server is stopped.
-         */
-        client.login().subscribe()
     }
 
     private fun loadCommands() {
@@ -110,12 +122,12 @@ object BotApplication {
 
     fun getServer(guildId: String) = serverList[guildId]
 
-    fun stop() {
+    suspend fun stop() {
         if (!started) {
             return
         }
         logger.debug("BotApplication is stopping")
         started = false
-        client.logout().subscribe()
+        client.logout().awaitFirst()
     }
 }

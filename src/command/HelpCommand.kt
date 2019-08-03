@@ -3,6 +3,7 @@ package fr.spoutnik87.command
 import discord4j.core.event.domain.message.MessageCreateEvent
 import fr.spoutnik87.Configuration
 import fr.spoutnik87.bot.Server
+import kotlinx.coroutines.reactive.awaitFirst
 import org.slf4j.LoggerFactory
 
 class HelpCommand(
@@ -12,7 +13,7 @@ class HelpCommand(
     private val logger = LoggerFactory.getLogger(HelpCommand::class.java)
 
     override suspend fun execute(messageEvent: MessageCreateEvent, server: Server) {
-        val channel = messageEvent.message.channel.block() ?: return
+        val channel = messageEvent.message.channel.awaitFirst() ?: return
         logger.debug("A command has been received on server ${server.guild.id.asString()}")
         channel.createMessage(
             """
@@ -34,6 +35,6 @@ class HelpCommand(
             -> Si vous avez des suggestions ou souhaitez contribuer, n'hesitez pas !
             -------------------------------------------------------------------------
             """.trimIndent()
-        ).block()
+        ).awaitFirst()
     }
 }

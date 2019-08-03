@@ -5,6 +5,7 @@ import discord4j.core.`object`.util.Permission
 import discord4j.core.`object`.util.Snowflake
 import discord4j.voice.VoiceConnection
 import fr.spoutnik87.BotApplication
+import kotlinx.coroutines.reactive.awaitFirst
 import java.util.concurrent.ConcurrentHashMap
 
 class Bot(
@@ -23,9 +24,9 @@ class Bot(
         if (!voiceState.channelId.isPresent) {
             return false
         }
-        val channel = voiceState.channel.block() ?: return false
-        val member = BotApplication.client.getMemberById(server.guild.id, userId).block() ?: return false
-        val permissions = channel.getEffectivePermissions(member.id).block()?.asEnumSet() ?: return false
+        val channel = voiceState.channel.awaitFirst() ?: return false
+        val member = BotApplication.client.getMemberById(server.guild.id, userId).awaitFirst() ?: return false
+        val permissions = channel.getEffectivePermissions(member.id).awaitFirst()?.asEnumSet() ?: return false
         return permissions.contains(Permission.CONNECT) && permissions.contains(Permission.SPEAK)
     }
 
@@ -34,10 +35,10 @@ class Bot(
             leaveVoiceChannel()
         }
         val voiceState = voiceStates[userId] ?: return false
-        val channel = voiceState.channel.block() ?: return false
+        val channel = voiceState.channel.awaitFirst() ?: return false
         voiceConnection = channel.join {
             it.setProvider(server.player.provider)
-        }.block() ?: return false
+        }.awaitFirst() ?: return false
         currentChannelId = channel.id.asString()
         return true
     }
