@@ -2,6 +2,7 @@ package fr.spoutnik87.command
 
 import discord4j.core.event.domain.message.MessageCreateEvent
 import fr.spoutnik87.bot.Server
+import kotlinx.coroutines.reactive.awaitFirst
 import org.slf4j.LoggerFactory
 
 class LinkCommand(
@@ -22,18 +23,18 @@ class LinkCommand(
             return
         }
         val userId = messageEvent.message.author.get().id.asString()
-        val channel = messageEvent.message.channel.block() ?: return
+        val channel = messageEvent.message.channel.awaitFirst() ?: return
         // messageEvent.message.delete().block()
         if (!server.linkable) {
-            channel.createMessage("Ce serveur est déjà lié.").block()
+            channel.createMessage("Ce serveur est déjà lié.").awaitFirst()
             return
         }
 
         val result = server.linkServer(token, userId)
         if (result != null) {
-            channel.createMessage("La liaison a été effectuée.").block()
+            channel.createMessage("La liaison a été effectuée.").awaitFirst()
         } else {
-            channel.createMessage("La liaison n'a pas pu être effectuée.").block()
+            channel.createMessage("La liaison n'a pas pu être effectuée.").awaitFirst()
         }
     }
 }

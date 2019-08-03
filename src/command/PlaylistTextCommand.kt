@@ -4,6 +4,7 @@ import discord4j.core.event.domain.message.MessageCreateEvent
 import fr.spoutnik87.bot.Content
 import fr.spoutnik87.bot.Server
 import fr.spoutnik87.util.Utils
+import kotlinx.coroutines.reactive.awaitFirst
 import org.slf4j.LoggerFactory
 
 class PlaylistTextCommand(override val prefix: String) : TextCommand {
@@ -11,7 +12,7 @@ class PlaylistTextCommand(override val prefix: String) : TextCommand {
     private val logger = LoggerFactory.getLogger(PlaylistTextCommand::class.java)
 
     override suspend fun execute(messageEvent: MessageCreateEvent, server: Server) {
-        val channel = messageEvent.message.channel.block() ?: return
+        val channel = messageEvent.message.channel.awaitFirst() ?: return
         logger.debug("A command has been received on server ${server.guild.id.asString()}")
         var queue = ""
         server.queue.getAllContents().map { formatContent(it) }.forEach { queue = queue.plus(it).plus("\n") }
@@ -23,7 +24,7 @@ ${formatContent(server.player.getPlayingContent(), server.player.getPosition())}
 Liste de la file d'attente :
 $queue
 -------------------------------------------------------------------------""".trimIndent()
-        ).block()
+        ).awaitFirst()
     }
 
     private fun formatContent(content: Content?, position: Long? = null) =

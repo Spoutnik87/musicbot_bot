@@ -3,6 +3,7 @@ package fr.spoutnik87.command
 import discord4j.core.event.domain.message.MessageCreateEvent
 import fr.spoutnik87.bot.Server
 import fr.spoutnik87.util.Utils
+import kotlinx.coroutines.reactive.awaitFirst
 import org.slf4j.LoggerFactory
 
 class SetPositionTextCommand(override val prefix: String) : TextCommand {
@@ -12,7 +13,7 @@ class SetPositionTextCommand(override val prefix: String) : TextCommand {
     override suspend fun execute(messageEvent: MessageCreateEvent, server: Server) {
         logger.debug("A command has been received on server ${server.guild.id.asString()}")
         if (!messageEvent.message.content.isPresent) return
-        val channel = messageEvent.message.channel.block() ?: return
+        val channel = messageEvent.message.channel.awaitFirst() ?: return
         val options = messageEvent.message.content.get().split(" ").filter { it != "" }
         val positionString = options.getOrNull(1)
         val position = if (positionString?.contains(":") == true) {
@@ -22,7 +23,7 @@ class SetPositionTextCommand(override val prefix: String) : TextCommand {
         }
         position?.apply {
             server.setContentPosition(this)
-            channel.createMessage("Action effectuée").block()
+            channel.createMessage("Action effectuée").awaitFirst()
         }
     }
 }
