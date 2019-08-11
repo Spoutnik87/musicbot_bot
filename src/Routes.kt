@@ -13,7 +13,10 @@ import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.route
 import io.ktor.util.getOrFail
+import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
+
+private val logger = LoggerFactory.getLogger(Routing::class.java)
 
 @UseExperimental(io.ktor.util.KtorExperimentalAPI::class)
 fun Routing.root() {
@@ -49,7 +52,11 @@ fun Routing.root() {
             if (server == null) {
                 call.respond(HttpStatusCode.BadRequest)
             } else {
-                commandList["play"]?.execute(WebRequestEvent(reader), server)
+                try {
+                    commandList["play"]?.execute(WebRequestEvent(reader), server)
+                } catch (e: Exception) {
+                    logger.error("An error happened during play command processing.", e)
+                }
                 call.respond(server.getStatus())
             }
         }
@@ -63,7 +70,11 @@ fun Routing.root() {
             if (server == null) {
                 call.respond(HttpStatusCode.BadRequest)
             } else {
-                commandList["stop"]?.execute(WebRequestEvent(reader), server)
+                try {
+                    commandList["stop"]?.execute(WebRequestEvent(reader), server)
+                } catch (e: Exception) {
+                    logger.error("An error happened during stop command processing.", e)
+                }
                 call.respond(server.getStatus())
             }
         }
@@ -77,7 +88,11 @@ fun Routing.root() {
             if (server == null) {
                 call.respond(HttpStatusCode.BadRequest)
             } else {
-                commandList["clear"]?.execute(WebRequestEvent(reader), server)
+                try {
+                    commandList["clear"]?.execute(WebRequestEvent(reader), server)
+                } catch (e: Exception) {
+                    logger.error("An error happened during clear command processing.", e)
+                }
                 call.respond(server.getStatus())
             }
         }
@@ -91,7 +106,11 @@ fun Routing.root() {
             if (server == null) {
                 call.respond(HttpStatusCode.BadRequest)
             } else {
-                commandList["setPosition"]?.execute(WebRequestEvent(reader), server)
+                try {
+                    commandList["setPosition"]?.execute(WebRequestEvent(reader), server)
+                } catch (e: Exception) {
+                    logger.error("An error happened during position update command processing.", e)
+                }
                 call.respond(server.getStatus())
             }
         }
@@ -106,7 +125,11 @@ fun Routing.root() {
             if (server == null) {
                 call.respond(HttpStatusCode.BadRequest)
             } else {
-                commandList["pause"]?.execute(WebRequestEvent(reader), server)
+                try {
+                    commandList["pause"]?.execute(WebRequestEvent(reader), server)
+                } catch (e: Exception) {
+                    logger.error("An error happened during pause command processing.", e)
+                }
                 call.respond(server.getStatus())
             }
         }
@@ -121,7 +144,11 @@ fun Routing.root() {
             if (server == null) {
                 call.respond(HttpStatusCode.BadRequest)
             } else {
-                commandList["resume"]?.execute(WebRequestEvent(reader), server)
+                try {
+                    commandList["resume"]?.execute(WebRequestEvent(reader), server)
+                } catch (e: Exception) {
+                    logger.error("An error happened during resume command processing.", e)
+                }
                 call.respond(server.getStatus())
             }
         }

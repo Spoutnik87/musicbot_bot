@@ -61,7 +61,11 @@ object BotApplication {
                         val server = serverList[guildId]
                         if (server != null) {
                             commandList.filter { content.startsWith(Configuration.superPrefix + it.key) }.forEach {
-                                it.value.execute(event, server)
+                                try {
+                                    it.value.execute(event, server)
+                                } catch (e: Exception) {
+                                    logger.error("An error happened during command processing : $content", e)
+                                }
                             }
                         }
                     }
