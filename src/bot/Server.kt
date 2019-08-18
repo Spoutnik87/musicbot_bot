@@ -6,8 +6,7 @@ import fr.spoutnik87.model.RestServerModel
 import fr.spoutnik87.viewmodel.ContentViewModel
 import fr.spoutnik87.viewmodel.QueueViewModel
 import fr.spoutnik87.viewmodel.ServerViewModel
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.CompletableDeferred
 import org.slf4j.LoggerFactory
 
 class Server(
@@ -24,11 +23,10 @@ class Server(
     val bot = Bot(this)
     val queue = Queue(this)
 
-    init {
+    suspend fun init() {
+        player.init()
         player.addListener(this)
-        GlobalScope.launch {
-            loadServerData()
-        }
+        loadServerData()
     }
 
     /**
@@ -47,9 +45,12 @@ class Server(
     }
 
     suspend fun playContent(content: Content) {
-        if (!player.isPlaying()) {
+        val response = CompletableDeferred<ContentPlayerState>()
+        player.send(GetState(response))
+        val state = response.await()
+        if (!state.playing) {
             if (bot.joinVoiceChannel(content.initiator)) {
-                player.play(content)
+                player.send(Play(content))
             }
         } else {
             queue.addContent(content)
@@ -57,13 +58,13 @@ class Server(
     }
 
     suspend fun stopPlayingContent() {
-        player.stop()
+        player.send(Stop)
     }
 
-    fun playNextContent() {
+    suspend fun playNextContent() {
         val content = queue.next()
         if (content != null) {
-            player.play(content)
+            player.send(Play(content))
         } else {
             bot.leaveVoiceChannel()
         }
@@ -71,12 +72,12 @@ class Server(
 
     suspend fun clearContents() {
         queue.clear()
-        player.stop()
+        player.send(Stop)
         bot.leaveVoiceChannel()
     }
 
-    fun setContentPosition(position: Long) {
-        player.setPosition(position)
+    suspend fun setContentPosition(position: Long) {
+        player.send(SetPosition(position))
     }
 
     /**
@@ -85,12 +86,15 @@ class Server(
      * @param content Content to be played
      */
     suspend fun replacePlayingContent(content: Content) {
-        if (!player.isPlaying()) {
+        val response = CompletableDeferred<ContentPlayerState>()
+        player.send(GetState(response))
+        val state = response.await()
+        if (!state.playing) {
             if (bot.joinVoiceChannel(content.initiator)) {
-                player.play(content)
+                player.send(Play(content))
             }
         } else {
-            player.play(content)
+            player.send(Play(content))
         }
     }
 
@@ -111,10 +115,13 @@ class Server(
         return null
     }
 
-    fun getStatus(): ServerViewModel {
+    suspend fun getStatus(): ServerViewModel {
+        val response = CompletableDeferred<ContentPlayerState>()
+        player.send(GetState(response))
+        val state = response.await()
         return ServerViewModel(guild.id.asString(), QueueViewModel(queue.getAllContents()
             .map { ContentViewModel(it.uid, it.id, it.initiator, null, null, null, it.name, it.duration) }),
-            player.getState().let {
+            state.let {
             if (it.content != null) {
                 ContentViewModel(
                     it.content.uid,
@@ -132,12 +139,12 @@ class Server(
         })
     }
 
-    fun pauseContent() {
-        player.pause()
+    suspend fun pauseContent() {
+        player.send(Pause)
     }
 
-    fun resumeContent() {
-        player.resume()
+    suspend fun resumeContent() {
+        player.send(Resume)
     }
 
     override suspend fun onAddContent(content: Content) {}
@@ -150,7 +157,7 @@ class Server(
 
     override fun onContentStop(content: Content) {}
 
-    override fun onContentEnd(content: Content) {
+    override suspend fun onContentEnd(content: Content) {
         playNextContent()
     }
 

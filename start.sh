@@ -1,9 +1,10 @@
 #!/bin/bash
 
-if [ -f "RUNNING_PID" ]
+if [ -f "/root/musicbotBot/RUNNING_PID" ]
 then
-	kill "$(cat RUNNING_PID)"
+	kill "$(cat /root/musicbotBot/RUNNING_PID)"
 	echo "Server is stopped."
+	rm /root/musicbotBot/RUNNING_PID
 	sleep 5
 else
 	echo "Server is not running. New server is ready to start."
@@ -18,7 +19,7 @@ sleep 5
 if ps -p $PID > /dev/null
 then
   echo "Server is running."
-  echo $PID > RUNNING_PID
+  echo $PID > /root/musicbotBot/RUNNING_PID
   exit 0
 else
   echo "Server is not running."

@@ -9,8 +9,11 @@ import discord4j.core.`object`.entity.Guild
 import discord4j.core.event.domain.VoiceStateUpdateEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
 import fr.spoutnik87.bot.ContentPlayer
+import fr.spoutnik87.bot.ContentPlayerState
+import fr.spoutnik87.bot.GetState
 import fr.spoutnik87.bot.Server
 import fr.spoutnik87.command.*
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collect
@@ -58,7 +61,11 @@ object BotApplication {
                         val server = serverList[guildId]
                         if (server != null) {
                             commandList.filter { content.startsWith(Configuration.superPrefix + it.key) }.forEach {
-                                it.value.execute(event, server)
+                                try {
+                                    it.value.execute(event, server)
+                                } catch (e: Exception) {
+                                    logger.error("An error happened during command processing : $content", e)
+                                }
                             }
                         }
                     }
@@ -72,7 +79,10 @@ object BotApplication {
                     if (server != null && bot != null) {
                         bot.voiceStates[it.current.userId] = it.current
                         // If the bot is playing, check if the bot is alone.
-                        if (server.player.isPlaying() && bot.currentChannelId != null) {
+                        val response = CompletableDeferred<ContentPlayerState>()
+                        server.player.send(GetState(response))
+                        val state = response.await()
+                        if (state.playing && bot.currentChannelId != null) {
                             // Get number of people in the same channel as the bot.
                             val people = bot.voiceStates.filter { it1 -> it1.value.channelId.isPresent }.map { it1 ->
                                 it1.value.channelId.get().asString()
@@ -91,7 +101,9 @@ object BotApplication {
                 client.guilds.asFlow().onEach {
                     if (it is Guild && serverList[it.id.asString()] == null) {
                         logger.debug("Server with id ${it.id.asString()} is initializing")
-                        serverList[it.id.asString()] = Server(it, ContentPlayer(playerManager.createPlayer()))
+                        val server = Server(it, ContentPlayer(playerManager.createPlayer()))
+                        server.init()
+                        serverList[it.id.asString()] = server
                     } else {
                         logger.error("An error happened during server with id ${it.id.asString()} initialization")
                     }

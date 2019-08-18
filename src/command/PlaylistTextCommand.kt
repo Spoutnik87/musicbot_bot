@@ -2,8 +2,11 @@ package fr.spoutnik87.command
 
 import discord4j.core.event.domain.message.MessageCreateEvent
 import fr.spoutnik87.bot.Content
+import fr.spoutnik87.bot.ContentPlayerState
+import fr.spoutnik87.bot.GetState
 import fr.spoutnik87.bot.Server
 import fr.spoutnik87.util.Utils
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.reactive.awaitFirst
 import org.slf4j.LoggerFactory
 
@@ -13,6 +16,9 @@ class PlaylistTextCommand(override val prefix: String) : TextCommand {
 
     override suspend fun execute(messageEvent: MessageCreateEvent, server: Server) {
         val channel = messageEvent.message.channel.awaitFirst() ?: return
+        val response = CompletableDeferred<ContentPlayerState>()
+        server.player.send(GetState(response))
+        val state = response.await()
         logger.debug("A command has been received on server ${server.guild.id.asString()}")
         var queue = ""
         server.queue.getAllContents().map { formatContent(it) }.forEach { queue = queue.plus(it).plus("\n") }
@@ -20,7 +26,7 @@ class PlaylistTextCommand(override val prefix: String) : TextCommand {
         channel.createMessage(
             """----------------------------- Musicbot playlist -----------------------------
 Morceau actuellement joué :
-${formatContent(server.player.getPlayingContent(), server.player.getPosition())}
+${formatContent(state.content, state.position)}
 Liste de la file d'attente :
 $queue
 -------------------------------------------------------------------------""".trimIndent()
