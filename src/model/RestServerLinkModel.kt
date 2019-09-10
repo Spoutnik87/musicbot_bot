@@ -4,5 +4,4 @@ data class RestServerLinkModel(
     val userId: String,
     val guildId: String,
     val token: String
-) {
-}
+)

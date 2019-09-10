@@ -40,10 +40,15 @@ object BotApplication {
         if (started) {
             return
         }
+        logger.info("Application is starting with the following configuration :")
+        logger.info("Discord bot token : " + Configuration.token)
+        logger.info("Files path : " + Configuration.filesPath)
+        logger.info("API URL : " + Configuration.apiUrl)
+        logger.info("API username : " + Configuration.username)
+        logger.info("API password : " + Configuration.password)
         started = true
-        logger.debug("BotApplication is starting")
+        logger.info("BotApplication is starting")
         RestClient.loadToken()
-
         loadCommands()
 
         client = DiscordClientBuilder(Configuration.token).build()
@@ -101,7 +106,7 @@ object BotApplication {
                 client.guilds.asFlow().onEach {
                     if (it is Guild && serverList[it.id.asString()] == null) {
                         logger.debug("Server with id ${it.id.asString()} is initializing")
-                        val server = Server(it, ContentPlayer(playerManager.createPlayer()))
+                        val server = Server(it, ContentPlayer(it.id.asString(), playerManager.createPlayer()))
                         server.init()
                         serverList[it.id.asString()] = server
                     } else {
@@ -120,7 +125,7 @@ object BotApplication {
         commandList["help"] = HelpCommand("help")
         commandList["link"] = LinkCommand("link")
         commandList["join"] = JoinCommand("join")
-        commandList["playlist"] = PlaylistTextCommand("playlist")
+        commandList["list"] = PlaylistTextCommand("list")
         commandList["play"] = PlayTextCommand("play")
         commandList["stop"] = StopTextCommand("stop")
         commandList["skip"] = SkipTextCommand("skip")
@@ -128,7 +133,7 @@ object BotApplication {
         commandList["pause"] = PauseTextCommand("pause")
         commandList["replay"] = ReplayTextCommand("replay")
         commandList["force"] = ForceTextCommand("force")
-        commandList["setpos"] = SetPositionTextCommand("setpos")
+        commandList["pos"] = SetPositionTextCommand("pos")
         commandList["dev"] = DevTextCommand("dev")
     }
 

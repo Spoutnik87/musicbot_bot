@@ -15,7 +15,7 @@ import io.ktor.content.TextContent
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.coroutineScope
 import org.slf4j.LoggerFactory
 import kotlin.system.exitProcess
 
@@ -28,8 +28,8 @@ object RestClient {
     /**
      * Blocking function. Retry until token is obtained.
      */
-    fun loadToken() {
-        runBlocking {
+    suspend fun loadToken() {
+        coroutineScope {
             try {
                 retry(60) {
                     login()
@@ -72,6 +72,14 @@ object RestClient {
         )
     }
 
+    suspend fun updateState(guildId: String) {
+        logger.debug("Sending a state to REST API for guildId : $guildId")
+        makeRequest<Unit>(
+            "${Configuration.apiUrl}/bot/state/$guildId",
+            HttpMethod.Post
+        )
+    }
+
     suspend fun linkGuildToServer(userId: String, guildId: String, token: String): RestServerModel? {
         logger.debug("Sending a link guild to server request to REST API userId : $userId and guildId : $guildId")
         return makeRequestWithBody(
@@ -109,10 +117,14 @@ object RestClient {
             login()
             call = doRequestWithBody(url, method, body, withToken)
         }
-        if (call.response.status.value == HttpStatusCode.OK.value || call.response.status.value == HttpStatusCode.Accepted.value) {
-            return Klaxon().parse<T>(call.response.readText(Charsets.UTF_8))
+        return if (call.response.status.value == HttpStatusCode.OK.value || call.response.status.value == HttpStatusCode.Accepted.value) {
+            try {
+                Klaxon().parse<T>(call.response.readText(Charsets.UTF_8))
+            } catch (e: Exception) {
+                null
+            }
         } else {
-            return null
+            null
         }
     }
 

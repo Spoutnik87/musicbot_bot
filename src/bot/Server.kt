@@ -8,6 +8,7 @@ import fr.spoutnik87.viewmodel.QueueViewModel
 import fr.spoutnik87.viewmodel.ServerViewModel
 import kotlinx.coroutines.CompletableDeferred
 import org.slf4j.LoggerFactory
+import java.util.*
 
 class Server(
     val guild: Guild,
@@ -119,7 +120,9 @@ class Server(
         val response = CompletableDeferred<ContentPlayerState>()
         player.send(GetState(response))
         val state = response.await()
-        return ServerViewModel(guild.id.asString(), QueueViewModel(queue.getAllContents()
+        return ServerViewModel(
+            Date().time, guild.id.asString(), QueueViewModel(
+                queue.getAllContents()
             .map { ContentViewModel(it.uid, it.id, it.initiator, null, null, null, it.name, it.duration) }),
             state.let {
             if (it.content != null) {

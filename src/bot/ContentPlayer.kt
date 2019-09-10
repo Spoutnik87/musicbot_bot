@@ -8,6 +8,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import fr.spoutnik87.BotApplication
 import fr.spoutnik87.Configuration
+import fr.spoutnik87.RestClient
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
@@ -25,6 +26,7 @@ data class SetPosition(val position: Long) : ContentPlayerAction()
 data class GetState(val response: CompletableDeferred<ContentPlayerState>) : ContentPlayerAction()
 
 class ContentPlayer(
+    private val guildId: String,
     private val audioPlayer: AudioPlayer
 ) {
 
@@ -54,6 +56,8 @@ class ContentPlayer(
 
     private var contentPlayerActor: SendChannel<ContentPlayerAction>? = null
 
+    private var contentPlayerNotifierActor: SendChannel<Unit>? = null
+
     private fun CoroutineScope.contentPlayerActor() = actor<ContentPlayerAction> {
         for (action in channel) {
             when (action) {
@@ -64,6 +68,20 @@ class ContentPlayer(
                 is SetPosition -> setPosition(action.position)
                 is GetState -> action.response.complete(getState())
             }
+            if (action !is GetState) launch {
+                try {
+                    RestClient.updateState(guildId)
+                } catch (e: Exception) {
+                }
+            }
+        }
+    }
+
+    private fun CoroutineScope.contentPlayerNotifierActor() = actor<Unit> {
+        var currentRequest: Job? = null
+        for (state in channel) {
+            /*currentRequest?.cancelAndJoin()
+            currentRequest = launch {  RestClient.updateState(guildId) }*/
         }
     }
 
@@ -75,6 +93,7 @@ class ContentPlayer(
         }
         GlobalScope.launch {
             contentPlayerActor = contentPlayerActor()
+            // contentPlayerNotifierActor = contentPlayerNotifierActor()
         }
     }
 

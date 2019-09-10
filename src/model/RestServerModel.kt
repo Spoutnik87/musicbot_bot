@@ -5,5 +5,4 @@ data class RestServerModel(
     val name: String,
     val ownerId: String,
     val linked: Boolean
-) {
-}
+)
