@@ -1,17 +1,20 @@
 package fr.spoutnik87.bot
 
 import discord4j.core.`object`.VoiceState
-import discord4j.rest.util.Permission
-import discord4j.rest.util.Snowflake
+import discord4j.core.`object`.util.Permission
+import discord4j.core.`object`.util.Snowflake
 import discord4j.voice.VoiceConnection
 import fr.spoutnik87.BotApplication
 import kotlinx.coroutines.reactive.awaitFirst
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
 class Bot(
     private val server: Server
 ) {
 
+    private val logger: Logger = LoggerFactory.getLogger(this::class.java)
     private var voiceConnection: VoiceConnection? = null
     var currentChannelId: String? = null
 
@@ -25,10 +28,8 @@ class Bot(
             return false
         }
         val channel = voiceState.channel.awaitFirst() ?: return false
-        val member =
-            BotApplication.discordClient.getMemberById(server.guild.id, userId).data.awaitFirst() ?: return false
-        val permissions =
-            channel.getEffectivePermissions(Snowflake.of(member.user().id())).awaitFirst()?.asEnumSet() ?: return false
+        val member = BotApplication.client.getMemberById(server.guild.id, userId).awaitFirst() ?: return false
+        val permissions = channel.getEffectivePermissions(member.id).awaitFirst()?.asEnumSet() ?: return false
         return permissions.contains(Permission.CONNECT) && permissions.contains(Permission.SPEAK)
     }
 
@@ -49,7 +50,11 @@ class Bot(
 
     fun leaveVoiceChannel() {
         if (voiceConnection != null) {
-            voiceConnection?.disconnect()
+            try {
+                voiceConnection?.disconnect()
+            } catch (e: Exception) {
+                logger.error("An error happened.", e)
+            }
             voiceConnection = null
         }
         currentChannelId = null

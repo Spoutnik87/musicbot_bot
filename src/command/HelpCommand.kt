@@ -32,12 +32,14 @@ class HelpCommand(
             -> ${Configuration.superPrefix}enable <fonctionalité> : Active une fonctionalité.
             -> ${Configuration.superPrefix}disable <fonctionalité> : Désactive une fonctionalité.
             -> ${Configuration.superPrefix}dev : Affiche des informations pour les développeurs.
+            -> ${Configuration.superPrefix}invocation <pseudonyme> : Joue le message d'intro de l'utilisateur.
             
             Listes des fonctionnalités supportés :
             - intro : Message d'introduction qui est déclenché à la connexion d'un utilisateur.
             
-            -> J'ai été conçu par @Spout#1308 et je suis open source. 
+            -> J'ai été conçu par @Spout#1308 et je suis open source.
             -> Si vous avez des suggestions ou souhaitez contribuer, n'hesitez pas !
+            -> Mon dépôt Github : https://github.com/spoutnik87/musicbot_bot
             -------------------------------------------------------------------------
             """.trimIndent()
         ).awaitFirst()

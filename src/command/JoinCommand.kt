@@ -16,10 +16,10 @@ class JoinCommand(
     override suspend fun execute(messageEvent: MessageCreateEvent, server: Server) {
         if (!Configuration.restApi) return
         logger.debug("A command has been received on server ${server.guild.id.asString()}")
-        if (messageEvent.message.content.isNullOrEmpty()) {
+        if (!messageEvent.message.content.isPresent) {
             return
         }
-        val options = messageEvent.message.content.split(" ").filter { it != "" }
+        val options = messageEvent.message.content.get().split(" ").filter { it != "" }
         if (options.size < 2) return;
         val token = options[1]
         val userId = messageEvent.message.author.get().id.asString()

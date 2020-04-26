@@ -139,18 +139,21 @@ class ContentPlayer(
         clearState()
         this.playingContent = content
         val audioTrack = coroutineScope {
-            val item = if (content.link != null) {
+            val item = if (content is YoutubeContent) {
                 logger.debug("Playing a content with link : ${content.link} and uid : ${content.uid}")
                 content.link
-            } else {
+            } else if (content is IdContent) {
                 logger.debug("Playing a content with id : ${content.id} and uid : ${content.uid}")
                 Configuration.filesPath + "media/" + content.id
-            }
+            } else if (content is FileContent) {
+                logger.debug("Playing a content with name : ${content.fileName} and uid : ${content.uid}")
+                content.fileName
+            } else ""
             loadItem(item)
         }
         if (audioTrack == null) {
             clearState()
-            logger.error("Could not load content with id : ${content.id}")
+            logger.error("Could not load content with id : ${content.uid}")
             listeners.forEach {
                 it.onContentStartFailure(content)
             }

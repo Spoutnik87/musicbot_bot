@@ -12,7 +12,9 @@ class EnableFeatureTextCommand(override val prefix: String) : TextCommand {
     override suspend fun execute(messageEvent: MessageCreateEvent, server: Server) {
         logger.debug("A command has been received on server ${server.guild.id.asString()}")
         val channel = messageEvent.message.channel.awaitFirst() ?: return
-        server.resumeContent()
+        val options = messageEvent.message.content.get().split(" ").filter { it != "" }
+        if (options.size < 2) return
+        server.setFeature(options[1], true)
         channel.createMessage("Action effectuée").awaitFirst()
     }
 }
