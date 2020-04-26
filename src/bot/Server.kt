@@ -1,6 +1,7 @@
 package fr.spoutnik87.bot
 
 import discord4j.core.`object`.entity.Guild
+import fr.spoutnik87.Configuration
 import fr.spoutnik87.RestClient
 import fr.spoutnik87.model.RestServerModel
 import fr.spoutnik87.viewmodel.ContentViewModel
@@ -34,14 +35,19 @@ class Server(
      * Load initial data.
      */
     suspend fun loadServerData() {
-        val server = RestClient.getServerByGuildId(guild.id.asString())
-        if (server == null) {
-            linkable = true
-            initialized = false
+        if (Configuration.restApi) {
+            val server = RestClient.getServerByGuildId(guild.id.asString())
+            if (server == null) {
+                linkable = true
+                initialized = false
+            } else {
+                this.server = server
+                linkable = !server.linked
+                initialized = true
+            }
         } else {
-            this.server = server
-            linkable = !server.linked
             initialized = true
+            linkable = false
         }
     }
 

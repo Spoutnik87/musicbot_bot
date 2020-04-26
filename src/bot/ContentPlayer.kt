@@ -70,7 +70,9 @@ class ContentPlayer(
             }
             if (action !is GetState) launch {
                 try {
-                    RestClient.updateState(guildId)
+                    if (Configuration.restApi) {
+                        RestClient.updateState(guildId)
+                    }
                 } catch (e: Exception) {
                 }
             }

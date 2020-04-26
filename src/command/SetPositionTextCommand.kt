@@ -12,9 +12,9 @@ class SetPositionTextCommand(override val prefix: String) : TextCommand {
 
     override suspend fun execute(messageEvent: MessageCreateEvent, server: Server) {
         logger.debug("A command has been received on server ${server.guild.id.asString()}")
-        if (!messageEvent.message.content.isPresent) return
+        if (messageEvent.message.content.isNullOrEmpty()) return
         val channel = messageEvent.message.channel.awaitFirst() ?: return
-        val options = messageEvent.message.content.get().split(" ").filter { it != "" }
+        val options = messageEvent.message.content.split(" ").filter { it != "" }
         val positionString = options.getOrNull(1)
         val position = if (positionString?.contains(":") == true) {
             Utils.fromDurationString(positionString)

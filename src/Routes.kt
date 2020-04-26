@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 private val logger = LoggerFactory.getLogger(Routing::class.java)
 
-@UseExperimental(io.ktor.util.KtorExperimentalAPI::class)
+@OptIn(io.ktor.util.KtorExperimentalAPI::class)
 fun Routing.root() {
 
     val commandList = ConcurrentHashMap<String, WebCommand>()

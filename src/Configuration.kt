@@ -2,7 +2,7 @@ package fr.spoutnik87
 
 import io.ktor.application.Application
 
-@UseExperimental(io.ktor.util.KtorExperimentalAPI::class)
+@OptIn(io.ktor.util.KtorExperimentalAPI::class)
 object Configuration {
 
     private lateinit var application: Application
@@ -25,6 +25,9 @@ object Configuration {
 
     val apiUrl
         get() = application.environment.config.property("ktor.apiUrl").getString()
+
+    val restApi
+        get() = application.environment.config.property("ktor.restApi").getString().toLowerCase() == "TRUE"
 
     val superPrefix = "!!"
 }

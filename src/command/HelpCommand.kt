@@ -29,7 +29,12 @@ class HelpCommand(
             -> ${Configuration.superPrefix}pause : Met en pause le morceau en cours.
             -> ${Configuration.superPrefix}resume : Reprend le morceau en cours.
             -> ${Configuration.superPrefix}pos <position> : Joue le morceau à partir du temps indiqué. (mm:ss)
+            -> ${Configuration.superPrefix}enable <fonctionalité> : Active une fonctionalité.
+            -> ${Configuration.superPrefix}disable <fonctionalité> : Désactive une fonctionalité.
             -> ${Configuration.superPrefix}dev : Affiche des informations pour les développeurs.
+            
+            Listes des fonctionnalités supportés :
+            - intro : Message d'introduction qui est déclenché à la connexion d'un utilisateur.
             
             -> J'ai été conçu par @Spout#1308 et je suis open source. 
             -> Si vous avez des suggestions ou souhaitez contribuer, n'hesitez pas !
