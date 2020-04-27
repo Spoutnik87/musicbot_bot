@@ -1,6 +1,6 @@
 package fr.spoutnik87.bot
 
-class Content(
+abstract class Content(
     /**
      * Used to identify this content in queue.
      */
@@ -15,10 +15,7 @@ class Content(
      * User Discord UUID
      */
     val initiator: String,
-    /**
-     * Link to external content. May be null
-     */
-    val link: String? = null,
+
     /**
      * Preferred start position
      */

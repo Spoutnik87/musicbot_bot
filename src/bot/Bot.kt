@@ -6,12 +6,15 @@ import discord4j.core.`object`.util.Snowflake
 import discord4j.voice.VoiceConnection
 import fr.spoutnik87.BotApplication
 import kotlinx.coroutines.reactive.awaitFirst
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
 class Bot(
     private val server: Server
 ) {
 
+    private val logger: Logger = LoggerFactory.getLogger(this::class.java)
     private var voiceConnection: VoiceConnection? = null
     var currentChannelId: String? = null
 
@@ -47,7 +50,11 @@ class Bot(
 
     fun leaveVoiceChannel() {
         if (voiceConnection != null) {
-            voiceConnection?.disconnect()
+            try {
+                voiceConnection?.disconnect()
+            } catch (e: Exception) {
+                logger.error("An error happened.", e)
+            }
             voiceConnection = null
         }
         currentChannelId = null

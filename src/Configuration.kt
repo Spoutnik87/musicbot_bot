@@ -2,7 +2,7 @@ package fr.spoutnik87
 
 import io.ktor.application.Application
 
-@UseExperimental(io.ktor.util.KtorExperimentalAPI::class)
+@OptIn(io.ktor.util.KtorExperimentalAPI::class)
 object Configuration {
 
     private lateinit var application: Application
@@ -10,6 +10,9 @@ object Configuration {
     operator fun invoke(application: Application) {
         this.application = application
     }
+
+    val environment
+        get() = application.environment.config.property("ktor.environment").getString()
 
     val token
         get() = application.environment.config.property("ktor.token").getString()
@@ -25,6 +28,18 @@ object Configuration {
 
     val apiUrl
         get() = application.environment.config.property("ktor.apiUrl").getString()
+
+    val restApi
+        get() = application.environment.config.property("ktor.restApi").getString().toLowerCase() == "TRUE"
+
+    val isDev
+        get() = environment == "dev"
+
+    val isProd
+        get() = environment != "dev"
+
+    val resources_path
+        get() = if (isDev) "resources" else ""
 
     val superPrefix = "!!"
 }

@@ -1,6 +1,7 @@
 package fr.spoutnik87.command
 
 import discord4j.core.event.domain.message.MessageCreateEvent
+import fr.spoutnik87.Configuration
 import fr.spoutnik87.bot.Server
 import kotlinx.coroutines.reactive.awaitFirst
 import org.slf4j.LoggerFactory
@@ -12,6 +13,7 @@ class LinkCommand(
     private val logger = LoggerFactory.getLogger(LinkCommand::class.java)
 
     override suspend fun execute(messageEvent: MessageCreateEvent, server: Server) {
+        if (!Configuration.restApi) return
         logger.debug("A command has been received on server ${server.guild.id.asString()}")
         if (!messageEvent.message.content.isPresent) {
             return

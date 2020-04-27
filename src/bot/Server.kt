@@ -1,13 +1,19 @@
 package fr.spoutnik87.bot
 
 import discord4j.core.`object`.entity.Guild
+import fr.spoutnik87.BotApplication
+import fr.spoutnik87.Configuration
 import fr.spoutnik87.RestClient
+import fr.spoutnik87.feature.Feature
 import fr.spoutnik87.model.RestServerModel
 import fr.spoutnik87.viewmodel.ContentViewModel
 import fr.spoutnik87.viewmodel.QueueViewModel
 import fr.spoutnik87.viewmodel.ServerViewModel
 import kotlinx.coroutines.CompletableDeferred
 import org.slf4j.LoggerFactory
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.reflect.full.primaryConstructor
 
 class Server(
     val guild: Guild,
@@ -23,6 +29,19 @@ class Server(
     val bot = Bot(this)
     val queue = Queue(this)
 
+    private val features = ConcurrentHashMap<String, Feature>()
+
+    suspend fun setFeature(name: String, enable: Boolean) {
+        val feature = BotApplication.featureList[name] ?: return
+        if (enable && features.none { it.value::class == feature }) {
+            features[name] = feature.primaryConstructor?.call(this)!!
+            features[name]?.start()
+        } else if (!enable && features.any { it.value::class == feature }) {
+            features[name]?.stop()
+            features.remove(name)
+        }
+    }
+
     suspend fun init() {
         player.init()
         player.addListener(this)
@@ -33,14 +52,19 @@ class Server(
      * Load initial data.
      */
     suspend fun loadServerData() {
-        val server = RestClient.getServerByGuildId(guild.id.asString())
-        if (server == null) {
-            linkable = true
-            initialized = false
+        if (Configuration.restApi) {
+            val server = RestClient.getServerByGuildId(guild.id.asString())
+            if (server == null) {
+                linkable = true
+                initialized = false
+            } else {
+                this.server = server
+                linkable = !server.linked
+                initialized = true
+            }
         } else {
-            this.server = server
-            linkable = !server.linked
             initialized = true
+            linkable = false
         }
     }
 
@@ -119,7 +143,9 @@ class Server(
         val response = CompletableDeferred<ContentPlayerState>()
         player.send(GetState(response))
         val state = response.await()
-        return ServerViewModel(guild.id.asString(), QueueViewModel(queue.getAllContents()
+        return ServerViewModel(
+            Date().time, guild.id.asString(), QueueViewModel(
+                queue.getAllContents()
             .map { ContentViewModel(it.uid, it.id, it.initiator, null, null, null, it.name, it.duration) }),
             state.let {
             if (it.content != null) {

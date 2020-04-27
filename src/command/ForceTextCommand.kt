@@ -1,8 +1,8 @@
 package fr.spoutnik87.command
 
 import discord4j.core.event.domain.message.MessageCreateEvent
-import fr.spoutnik87.bot.Content
 import fr.spoutnik87.bot.Server
+import fr.spoutnik87.bot.YoutubeContent
 import fr.spoutnik87.util.URLHelper
 import fr.spoutnik87.util.UUID
 import fr.spoutnik87.util.Utils
@@ -31,11 +31,21 @@ class ForceTextCommand(override val prefix: String) : TextCommand {
                 positionString?.toLongOrNull()?.let { it * 1000 }
             }
             Utils.loadMetadata(link)?.let {
-                server.replacePlayingContent(Content(UUID.v4(), null, userId, link, position, it.title, it.duration))
+                server.replacePlayingContent(
+                    YoutubeContent(
+                        UUID.v4(),
+                        UUID.v4(),
+                        userId,
+                        link,
+                        position,
+                        it.title,
+                        it.duration
+                    )
+                )
             }
             channel.createMessage("Action effectuée").awaitFirst()
         } else {
-            channel.createMessage("Le lien est incorrecte").awaitFirst()
+            channel.createMessage("Le lien est incorrect").awaitFirst()
         }
     }
 }

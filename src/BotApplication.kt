@@ -13,15 +13,18 @@ import fr.spoutnik87.bot.ContentPlayerState
 import fr.spoutnik87.bot.GetState
 import fr.spoutnik87.bot.Server
 import fr.spoutnik87.command.*
+import fr.spoutnik87.feature.Feature
+import fr.spoutnik87.feature.IntroFeature
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirst
-import kotlinx.coroutines.reactive.flow.asFlow
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.reflect.KClass
 
 object BotApplication {
 
@@ -31,6 +34,7 @@ object BotApplication {
     private val serverList = ConcurrentHashMap<String, Server>()
 
     private val commandList = ConcurrentHashMap<String, TextCommand>()
+    val featureList = ConcurrentHashMap<String, KClass<out Feature>>()
 
     val playerManager = DefaultAudioPlayerManager()
 
@@ -40,13 +44,21 @@ object BotApplication {
         if (started) {
             return
         }
+        logger.info("Application is starting with the following configuration :")
+        logger.info("Discord bot token : " + Configuration.token)
+        logger.info("Files path : " + Configuration.filesPath)
+        logger.info("API URL : " + Configuration.apiUrl)
+        logger.info("API username : " + Configuration.username)
+        logger.info("API password : " + Configuration.password)
         started = true
-        logger.debug("BotApplication is starting")
-        RestClient.loadToken()
-
+        logger.info("BotApplication is starting")
+        if (Configuration.restApi) {
+            RestClient.loadToken()
+        }
         loadCommands()
+        loadFeatures()
 
-        client = DiscordClientBuilder(Configuration.token).build()
+        client = DiscordClientBuilder.create(Configuration.token).build()
 
         playerManager.configuration.setFrameBufferFactory(::NonAllocatingAudioFrameBuffer)
         AudioSourceManagers.registerRemoteSources(playerManager)
@@ -101,7 +113,7 @@ object BotApplication {
                 client.guilds.asFlow().onEach {
                     if (it is Guild && serverList[it.id.asString()] == null) {
                         logger.debug("Server with id ${it.id.asString()} is initializing")
-                        val server = Server(it, ContentPlayer(playerManager.createPlayer()))
+                        val server = Server(it, ContentPlayer(it.id.asString(), playerManager.createPlayer()))
                         server.init()
                         serverList[it.id.asString()] = server
                     } else {
@@ -120,7 +132,7 @@ object BotApplication {
         commandList["help"] = HelpCommand("help")
         commandList["link"] = LinkCommand("link")
         commandList["join"] = JoinCommand("join")
-        commandList["playlist"] = PlaylistTextCommand("playlist")
+        commandList["list"] = PlaylistTextCommand("list")
         commandList["play"] = PlayTextCommand("play")
         commandList["stop"] = StopTextCommand("stop")
         commandList["skip"] = SkipTextCommand("skip")
@@ -128,8 +140,15 @@ object BotApplication {
         commandList["pause"] = PauseTextCommand("pause")
         commandList["replay"] = ReplayTextCommand("replay")
         commandList["force"] = ForceTextCommand("force")
-        commandList["setpos"] = SetPositionTextCommand("setpos")
+        commandList["pos"] = SetPositionTextCommand("pos")
         commandList["dev"] = DevTextCommand("dev")
+        commandList["enable"] = EnableFeatureTextCommand("enable")
+        commandList["disable"] = DisableFeatureTextCommand("disable")
+        commandList["invocation"] = IntroTextCommand("invocation")
+    }
+
+    private fun loadFeatures() {
+        featureList["intro"] = IntroFeature::class
     }
 
     fun getServer(guildId: String) = serverList[guildId]

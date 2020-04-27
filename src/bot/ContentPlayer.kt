@@ -8,6 +8,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import fr.spoutnik87.BotApplication
 import fr.spoutnik87.Configuration
+import fr.spoutnik87.RestClient
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
@@ -25,6 +26,7 @@ data class SetPosition(val position: Long) : ContentPlayerAction()
 data class GetState(val response: CompletableDeferred<ContentPlayerState>) : ContentPlayerAction()
 
 class ContentPlayer(
+    private val guildId: String,
     private val audioPlayer: AudioPlayer
 ) {
 
@@ -54,6 +56,8 @@ class ContentPlayer(
 
     private var contentPlayerActor: SendChannel<ContentPlayerAction>? = null
 
+    private var contentPlayerNotifierActor: SendChannel<Unit>? = null
+
     private fun CoroutineScope.contentPlayerActor() = actor<ContentPlayerAction> {
         for (action in channel) {
             when (action) {
@@ -64,6 +68,22 @@ class ContentPlayer(
                 is SetPosition -> setPosition(action.position)
                 is GetState -> action.response.complete(getState())
             }
+            if (action !is GetState) launch {
+                try {
+                    if (Configuration.restApi) {
+                        RestClient.updateState(guildId)
+                    }
+                } catch (e: Exception) {
+                }
+            }
+        }
+    }
+
+    private fun CoroutineScope.contentPlayerNotifierActor() = actor<Unit> {
+        var currentRequest: Job? = null
+        for (state in channel) {
+            /*currentRequest?.cancelAndJoin()
+            currentRequest = launch {  RestClient.updateState(guildId) }*/
         }
     }
 
@@ -75,6 +95,7 @@ class ContentPlayer(
         }
         GlobalScope.launch {
             contentPlayerActor = contentPlayerActor()
+            // contentPlayerNotifierActor = contentPlayerNotifierActor()
         }
     }
 
@@ -118,18 +139,21 @@ class ContentPlayer(
         clearState()
         this.playingContent = content
         val audioTrack = coroutineScope {
-            val item = if (content.link != null) {
+            val item = if (content is YoutubeContent) {
                 logger.debug("Playing a content with link : ${content.link} and uid : ${content.uid}")
                 content.link
-            } else {
+            } else if (content is IdContent) {
                 logger.debug("Playing a content with id : ${content.id} and uid : ${content.uid}")
                 Configuration.filesPath + "media/" + content.id
-            }
+            } else if (content is FileContent) {
+                logger.debug("Playing a content with name : ${content.fileName} and uid : ${content.uid}")
+                content.fileName
+            } else ""
             loadItem(item)
         }
         if (audioTrack == null) {
             clearState()
-            logger.error("Could not load content with id : ${content.id}")
+            logger.error("Could not load content with id : ${content.uid}")
             listeners.forEach {
                 it.onContentStartFailure(content)
             }
