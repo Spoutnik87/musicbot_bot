@@ -29,7 +29,7 @@ class IntroTextCommand(override val prefix: String) : TextCommand {
                     UUID.v4(),
                     UUID.v4(),
                     user.id.asString(),
-                    "${Configuration.resources_path}/${it.intro}",
+                    "${Configuration.resources_path}${it.intro}",
                     0,
                     "Intro ${it.username}"
                 )

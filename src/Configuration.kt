@@ -39,7 +39,7 @@ object Configuration {
         get() = environment != "dev"
 
     val resources_path
-        get() = if (isDev) "resources" else ""
+        get() = if (isDev) "resources/" else ""
 
     val superPrefix = "!!"
 }
