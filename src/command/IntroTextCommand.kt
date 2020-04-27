@@ -18,11 +18,11 @@ class IntroTextCommand(override val prefix: String) : TextCommand {
         val channel = messageEvent.message.channel.awaitFirst() ?: return
         if (!messageEvent.member.isPresent) return
         val user = messageEvent.member.get()
-        val options = messageEvent.message.content.get().split(" ").filter { it != "" }
-        if (options.size < 2) return
+        val username = messageEvent.message.content.get().substringAfter(" ", "")
+        if (username.isNullOrEmpty()) return
         val intros = IntroFeature.loadIntroFile()
         intros.filter { introItem ->
-            introItem.username == options[1]
+            introItem.username.toLowerCase() == username.toLowerCase()
         }.takeIf { it.isNotEmpty() }?.random()?.also {
             server.playContent(
                 FileContent(
@@ -31,7 +31,7 @@ class IntroTextCommand(override val prefix: String) : TextCommand {
                     user.id.asString(),
                     "${Configuration.resources_path}/${it.intro}",
                     0,
-                    "Intro ${options[1]}"
+                    "Intro ${it.username}"
                 )
             )
         }

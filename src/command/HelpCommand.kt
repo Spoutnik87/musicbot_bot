@@ -39,7 +39,6 @@ class HelpCommand(
             
             -> J'ai été conçu par @Spout#1308 et je suis open source.
             -> Si vous avez des suggestions ou souhaitez contribuer, n'hesitez pas !
-            -> Mon dépôt Github : https://github.com/spoutnik87/musicbot_bot
             -------------------------------------------------------------------------
             """.trimIndent()
         ).awaitFirst()
