@@ -43,7 +43,7 @@ class IntroFeature(val server: Server) : Feature {
                                 UUID.v4(),
                                 UUID.v4(),
                                 user.id.asString(),
-                                "${Configuration.resources_path}/${it.intro}",
+                                "${Configuration.resources_path}${it.intro}",
                                 0,
                                 "Intro ${user.username}"
                             )
@@ -62,7 +62,7 @@ class IntroFeature(val server: Server) : Feature {
     companion object {
         fun loadIntroFile(): List<IntroItem> {
             return jacksonObjectMapper().readValue(
-                File("${Configuration.resources_path}/intro.json").bufferedReader().readText()
+                File("${Configuration.resources_path}intro.json").bufferedReader().readText()
             )
         }
     }
