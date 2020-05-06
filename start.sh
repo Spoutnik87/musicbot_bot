@@ -10,6 +10,10 @@ else
 	echo "Server is not running. New server is ready to start."
 fi
 
+set -a
+source .env
+set +a
+
 nohup java -jar target/musicbot_bot-*-jar-with-dependencies.jar > logs.txt 2>&1 &
 
 PID=$!
